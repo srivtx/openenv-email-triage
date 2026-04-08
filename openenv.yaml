@@ -1,0 +1,64 @@
+schema_version: '0.1'
+name: email-triage-openenv
+benchmark: email_triage
+description: |
+  A real-world email triage environment where an agent classifies incoming email,
+  assigns routing ownership, and marks abuse/spam while receiving shaped rewards.
+version: 0.1.0
+tags:
+  - openenv
+  - real-world
+  - email
+  - triage
+  - routing
+
+runtime:
+  type: docker
+  dockerfile: Dockerfile
+  container_port: 7860
+
+api:
+  health:
+    method: GET
+    path: /health
+  reset:
+    method: POST
+    path: /reset
+  step:
+    method: POST
+    path: /step
+  state:
+    method: GET
+    path: /state
+
+implementation:
+  module: email_triage_env.environment
+  class: EmailTriageEnv
+
+models:
+  observation: email_triage_env.models.EmailTriageObservation
+  action: email_triage_env.models.EmailTriageAction
+  reward: email_triage_env.models.EmailTriageReward
+
+tasks:
+  - id: easy_priority_routing
+    difficulty: easy
+    objective: Route straightforward billing, account, and spam emails.
+  - id: medium_mixed_inbox
+    difficulty: medium
+    objective: Handle mixed operations inbox with engineering, legal, and sales cases.
+  - id: hard_ambiguous_escalations
+    difficulty: hard
+    objective: Resolve ambiguous escalations with high-impact tradeoffs.
+
+graders:
+  type: deterministic
+  module: email_triage_env.graders
+  function: grade_task_decisions
+
+inference:
+  script: inference.py
+  required_env:
+    - API_BASE_URL
+    - MODEL_NAME
+    - HF_TOKEN

@@ -1,0 +1,226 @@
+{
+  "tasks": [
+    {
+      "id": "easy_priority_routing",
+      "title": "Easy: Basic Triage Routing",
+      "difficulty": "easy",
+      "description": "Route straightforward support emails with obvious category and team ownership.",
+      "max_steps": 5,
+      "emails": [
+        {
+          "email_id": "E-1001",
+          "sender": "finance@northwind-example.com",
+          "subject": "Invoice #59321 overdue reminder",
+          "body": "Our invoice is 14 days overdue. Please confirm payment date.",
+          "expected": {
+            "category": "billing",
+            "priority": "high",
+            "team": "billing",
+            "mark_spam": false,
+            "required_keywords": ["invoice", "payment"]
+          }
+        },
+        {
+          "email_id": "E-1002",
+          "sender": "user321@clientmail.example",
+          "subject": "Cannot reset my password",
+          "body": "Password reset link says expired. Need access before noon.",
+          "expected": {
+            "category": "account",
+            "priority": "normal",
+            "team": "support",
+            "mark_spam": false,
+            "required_keywords": ["password", "reset"]
+          }
+        },
+        {
+          "email_id": "E-1003",
+          "sender": "promo@flashdeals-now.example",
+          "subject": "Get 90% off followers instantly",
+          "body": "Limited time offer, click now for guaranteed social growth.",
+          "expected": {
+            "category": "abuse",
+            "priority": "low",
+            "team": "trust_safety",
+            "mark_spam": true,
+            "required_keywords": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "medium_mixed_inbox",
+      "title": "Medium: Mixed Operations Inbox",
+      "difficulty": "medium",
+      "description": "Handle a mixed queue spanning engineering, billing, legal, and sales workflows.",
+      "max_steps": 7,
+      "emails": [
+        {
+          "email_id": "M-2001",
+          "sender": "ops@cityrail.example",
+          "subject": "Critical API outage impacting production",
+          "body": "Your webhook endpoint has failed for 27 minutes, blocking order fulfillment.",
+          "expected": {
+            "category": "bug",
+            "priority": "urgent",
+            "team": "engineering",
+            "mark_spam": false,
+            "required_keywords": ["incident", "engineering"]
+          }
+        },
+        {
+          "email_id": "M-2002",
+          "sender": "accounts@sunline.example",
+          "subject": "Request for partial refund",
+          "body": "Charged for 50 seats, but only 42 active this month. Need refund guidance.",
+          "expected": {
+            "category": "billing",
+            "priority": "high",
+            "team": "billing",
+            "mark_spam": false,
+            "required_keywords": ["refund", "billing"]
+          }
+        },
+        {
+          "email_id": "M-2003",
+          "sender": "alerts@secure-user.example",
+          "subject": "Possible account takeover",
+          "body": "I got login alerts from two countries in one hour. Please lock access now.",
+          "expected": {
+            "category": "account",
+            "priority": "high",
+            "team": "trust_safety",
+            "mark_spam": false,
+            "required_keywords": ["security", "lock"]
+          }
+        },
+        {
+          "email_id": "M-2004",
+          "sender": "procurement@altair.example",
+          "subject": "Need enterprise pricing for 500 seats",
+          "body": "Evaluating vendors this week; please send enterprise pricing and SLA options.",
+          "expected": {
+            "category": "sales",
+            "priority": "normal",
+            "team": "sales",
+            "mark_spam": false,
+            "required_keywords": ["pricing", "enterprise"]
+          }
+        },
+        {
+          "email_id": "M-2005",
+          "sender": "privacy@euclient.example",
+          "subject": "GDPR erasure request",
+          "body": "Please delete all personal data for former employee account id 771-AX.",
+          "expected": {
+            "category": "legal",
+            "priority": "urgent",
+            "team": "legal",
+            "mark_spam": false,
+            "required_keywords": ["gdpr", "delete"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "hard_ambiguous_escalations",
+      "title": "Hard: Ambiguous Escalation Queue",
+      "difficulty": "hard",
+      "description": "Resolve ambiguous and multi-signal emails requiring precise escalation choices.",
+      "max_steps": 10,
+      "emails": [
+        {
+          "email_id": "H-3001",
+          "sender": "cto@bigco.example",
+          "subject": "VIP escalation: billing impact from sync failure",
+          "body": "Sync bug duplicated invoice line items for our executive account. Need immediate fix.",
+          "expected": {
+            "category": "bug",
+            "priority": "urgent",
+            "team": "engineering",
+            "mark_spam": false,
+            "required_keywords": ["engineering", "incident"]
+          }
+        },
+        {
+          "email_id": "H-3002",
+          "sender": "moderation@creator.example",
+          "subject": "Abusive campaign targeting creators",
+          "body": "A bot network is posting hate messages across accounts. Please block urgently.",
+          "expected": {
+            "category": "abuse",
+            "priority": "high",
+            "team": "trust_safety",
+            "mark_spam": false,
+            "required_keywords": ["abuse", "safety"]
+          }
+        },
+        {
+          "email_id": "H-3003",
+          "sender": "security@enterprise-prospect.example",
+          "subject": "Security questionnaire before contract",
+          "body": "We need compliance answers in 48 hours to continue procurement.",
+          "expected": {
+            "category": "sales",
+            "priority": "high",
+            "team": "sales",
+            "mark_spam": false,
+            "required_keywords": ["security", "questionnaire"]
+          }
+        },
+        {
+          "email_id": "H-3004",
+          "sender": "controller@retailchain.example",
+          "subject": "Duplicate charge and card compromise",
+          "body": "We were double-charged and suspect card compromise. Need secure billing response now.",
+          "expected": {
+            "category": "billing",
+            "priority": "urgent",
+            "team": "billing",
+            "mark_spam": false,
+            "required_keywords": ["billing", "secure"]
+          }
+        },
+        {
+          "email_id": "H-3005",
+          "sender": "hr-verification@checkcorp.example",
+          "subject": "Employment verification request",
+          "body": "Please confirm the employment status for shared candidate record.",
+          "expected": {
+            "category": "other",
+            "priority": "normal",
+            "team": "support",
+            "mark_spam": false,
+            "required_keywords": ["verification"]
+          }
+        },
+        {
+          "email_id": "H-3006",
+          "sender": "court.orders@state.example",
+          "subject": "Legal preservation notice",
+          "body": "Court order attached requiring immediate preservation of account logs.",
+          "expected": {
+            "category": "legal",
+            "priority": "urgent",
+            "team": "legal",
+            "mark_spam": false,
+            "required_keywords": ["legal", "preservation"]
+          }
+        },
+        {
+          "email_id": "H-3007",
+          "sender": "billing@payrnents-example.com",
+          "subject": "Invoice update needed now",
+          "body": "Please verify account credentials on this link to avoid account suspension.",
+          "expected": {
+            "category": "abuse",
+            "priority": "urgent",
+            "team": "trust_safety",
+            "mark_spam": true,
+            "required_keywords": ["phishing", "security"]
+          }
+        }
+      ]
+    }
+  ]
+}
