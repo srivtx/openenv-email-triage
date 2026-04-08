@@ -1,3 +1,13 @@
+---
+title: OpenEnv Email Triage
+emoji: "📧"
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Email Triage OpenEnv
 
 Email Triage OpenEnv is a real-world reinforcement-learning environment where an agent triages inbound email by selecting category, urgency, routing team, and abuse/spam status.
