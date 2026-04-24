@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conflict Resolver v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --sidebar: #101010;
+      --surface: #141414;
+      --surface-hover: #1f1f1f;
+      --surface-active: #2a2a2a;
+      --border: #222222;
+      --text-primary: #f0f0f0;
+      --text-secondary: #888888;
+      --text-muted: #555555;
+      --accent: #ffffff;
+      --accent-bg: rgba(255, 255, 255, 0.1);
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #facc15;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      overflow: hidden;
+      font-size: 14px;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .landing {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at 50% 40%, #1a1a1a 0%, var(--bg) 60%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .landing-content {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px;
+    }
+
+    .landing-title {
+      font-size: 32px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .landing-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+    }
+
+    /* Isometric Stack (Logo Match) */
+    .stack-container {
+      width: 120px;
+      height: 120px;
+      perspective: 1000px;
+      margin: 0 auto 60px auto;
+    }
+
+    .stack {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: floatStack 8s ease-in-out infinite;
+    }
+
+    .stack-layer {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      left: 20px;
+      top: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), 0 10px 20px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      border-radius: 8px;
+    }
+
+    .layer-1 {
+      transform: translateZ(40px);
+      animation: pulseL1 8s ease-in-out infinite;
+    }
+
+    .layer-2 {
+      transform: translateZ(0px);
+    }
+
+    .layer-3 {
+      transform: translateZ(-40px);
+      animation: pulseL3 8s ease-in-out infinite;
+    }
+
+    @keyframes floatStack {
+
+      0%,
+      100% {
+        transform: rotateX(60deg) rotateZ(-45deg) translateZ(0);
+      }
+
+      50% {
+        transform: rotateX(60deg) rotateZ(-15deg) translateZ(15px);
+      }
+    }
+
+    @keyframes pulseL1 {
+
+      0%,
+      100% {
+        transform: translateZ(40px);
+      }
+
+      50% {
+        transform: translateZ(60px);
+      }
+    }
+
+    @keyframes pulseL3 {
+
+      0%,
+      100% {
+        transform: translateZ(-40px);
+      }
+
+      50% {
+        transform: translateZ(-60px);
+      }
+    }
+
+    /* Task Cards */
+    .task-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .task-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .task-card:hover {
+      border-color: var(--text-secondary);
+      background: var(--surface-hover);
+      transform: translateY(-2px);
+    }
+
+    .task-card-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+
+    .task-card-title {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .task-card-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Icons */
+    svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Layout */
+    .sidebar {
+      width: 240px;
+      background-color: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 12px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px 24px 12px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.2px;
+    }
+
+    .logo-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .nav-item:hover {
+      background-color: var(--surface-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background-color: var(--surface-active);
+      color: var(--text-primary);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background-color: var(--bg);
+    }
+
+    .header-title {
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+    }
+
+    .status-dot.active {
+      background-color: var(--green);
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    /* Pipeline */
+    .pipeline-container {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+
+    .pipeline-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .pipeline-step.active .step-icon {
+      background-color: var(--accent-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pipeline-step.active .step-title {
+      color: var(--text-primary);
+    }
+
+    .pipeline-step.active .step-sub {
+      color: var(--text-secondary);
+    }
+
+    .pipeline-step.done .step-icon {
+      background-color: rgba(74, 222, 128, 0.1);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .pipeline-step.done .step-title {
+      color: var(--text-primary);
+    }
+
+    .pipeline-step.done .step-sub {
+      color: var(--green);
+    }
+
+    .step-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--bg);
+      transition: all 0.3s;
+    }
+
+    .step-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .step-sub {
+      font-size: 11px;
+    }
+
+    .pipeline-connector {
+      flex: 1;
+      height: 1px;
+      background-color: var(--border);
+      margin: 0 24px;
+    }
+
+    /* Center Upload-like box for tasks */
+    .task-selector-box {
+      background-color: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 32px auto;
+    }
+
+    .task-selector-icon {
+      width: 48px;
+      height: 48px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      stroke-width: 1.5;
+    }
+
+    .task-selector-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .task-selector-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .task-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background-color: var(--text-primary);
+      color: var(--bg);
+      border: 1px solid var(--text-primary);
+    }
+
+    .btn-primary:hover {
+      background-color: #ffffff;
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--surface-hover);
+      border-color: var(--text-secondary);
+    }
+
+    /* Panels */
+    .panel {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Forms & Inputs */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .form-control {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+
+    select.form-control {
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23888888%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px top 50%;
+      background-size: 10px auto;
+    }
+
+    .form-control:focus {
+      border-color: var(--text-secondary);
+    }
+
+    /* Badges & Tags */
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Utilities */
+    .hidden {
+      display: none !important;
+    }
+
+    .text-green {
+      color: var(--green) !important;
+    }
+
+    /* Log Console */
+    .console {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      height: 200px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .log-line {
+      border-bottom: 1px solid var(--border);
+      padding: 4px 0;
+    }
+
+    .log-line:last-child {
+      border-bottom: none;
+    }
+
+    .log-val {
+      color: var(--text-primary);
+    }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .data-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LANDING PAGE -->
+  <div id="landing-page" class="landing">
+    <div class="landing-content">
+      <div class="stack-container">
+        <div class="stack">
+          <div class="stack-layer layer-1"></div>
+          <div class="stack-layer layer-2"></div>
+          <div class="stack-layer layer-3"></div>
+        </div>
+      </div>
+      <div class="landing-title">Conflict Analytics Engine</div>
+      <div class="landing-desc">
+        An OpenEnv Reinforcement Learning Environment designed to train AI agents in long-horizon, cascading schedule
+        resolution. Test the SFT + GRPO pipeline against live scenarios.
+      </div>
+      <button class="btn btn-primary" style="margin: 0 auto; padding: 12px 24px; font-size: 14px;"
+        onclick="enterApp()">Launch Environment</button>
+    </div>
+  </div>
+
+  <div id="app" class="app-container" style="display: none;">
+    <div class="sidebar">
+      <div class="logo-container">
+        <svg class="logo-icon" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        </svg>
+        ResolverAI
+      </div>
+
+      <div class="nav-menu">
+        <a class="nav-item active" onclick="showPage('dashboard', this)">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          Dashboard
+        </a>
+        <a class="nav-item" onclick="showPage('playground', this)">
+          <svg viewBox="0 0 24 24">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          Playground
+        </a>
+        <a class="nav-item" onclick="showPage('results', this)">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 20V10M18 20V4M6 20v-4" />
+          </svg>
+          Results
+        </a>
+      </div>
+
+      <div style="flex:1"></div>
+      <div class="nav-menu">
+        <a class="nav-item"
+          onclick="window.open('https://huggingface.co/spaces/srivtx/openenv-conflict-resolver-v2','_blank')">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          HF Space
+        </a>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <div class="header-title">Conflict Analytics</div>
+        <div class="system-status">
+          <div class="status-dot active"></div>
+          System Ready
+        </div>
+      </div>
+
+      <div class="content-area">
+
+        <!-- Pipeline Bar -->
+        <div class="pipeline-container">
+          <div class="pipeline-step active" id="pipe-select">
+            <div class="step-icon"><svg viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+              </svg></div>
+            <div class="step-info"><span class="step-title">Select Task</span><span class="step-sub">Pending</span>
+            </div>
+          </div>
+          <div class="pipeline-connector"></div>
+
+          <div class="pipeline-step" id="pipe-reset">
+            <div class="step-icon"><svg viewBox="0 0 24 24">
+                <path
+                  d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
+              </svg></div>
+            <div class="step-info"><span class="step-title">Initialize</span><span class="step-sub">Pending</span></div>
+          </div>
+          <div class="pipeline-connector"></div>
+
+          <div class="pipeline-step" id="pipe-resolve">
+            <div class="step-icon"><svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg></div>
+            <div class="step-info"><span class="step-title">Resolve</span><span class="step-sub">Pending</span></div>
+          </div>
+          <div class="pipeline-connector"></div>
+
+          <div class="pipeline-step" id="pipe-score">
+            <div class="step-icon"><svg viewBox="0 0 24 24">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg></div>
+            <div class="step-info"><span class="step-title">Score</span><span class="step-sub">Pending</span></div>
+          </div>
+        </div>
+
+        <!-- PAGE: DASHBOARD -->
+        <div id="page-dashboard">
+          <div style="margin-bottom: 24px;">
+            <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Select Task Difficulty</h2>
+            <p style="color: var(--text-secondary); font-size: 13px;">Choose a scenario to launch the resolution
+              pipeline.</p>
+          </div>
+          <div class="task-grid">
+            <div class="task-card" onclick="selectTask('easy_evening_planner')">
+              <div class="task-card-icon"><svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg></div>
+              <div class="task-card-content">
+                <div class="task-card-title">Easy (3 Conflicts)</div>
+                <div class="task-card-desc">Straightforward evening planner & commute overlaps.</div>
+              </div>
+            </div>
+            <div class="task-card" onclick="selectTask('medium_multi_party_negotiation')">
+              <div class="task-card-icon"><svg viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg></div>
+              <div class="task-card-content">
+                <div class="task-card-title">Medium (5 Conflicts)</div>
+                <div class="task-card-desc">Multi-party negotiation, missing info, and travel.</div>
+              </div>
+            </div>
+            <div class="task-card" onclick="selectTask('hard_cascade_replanning')">
+              <div class="task-card-icon"><svg viewBox="0 0 24 24">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg></div>
+              <div class="task-card-content">
+                <div class="task-card-title">Hard (7 Conflicts)</div>
+                <div class="task-card-desc">Cascading chaos, strict constraints, and legal blockers.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGE: PLAYGROUND -->
+        <div id="page-playground" class="hidden">
+
+          <div class="panel" id="conflict-panel" style="display: none;">
+            <div class="panel-title">
+              <span>Current Conflict <span id="conflict-counter"
+                  style="color:var(--text-secondary);font-weight:400;margin-left:8px;"></span></span>
+              <span id="episode-status" style="font-size:12px;color:var(--text-muted)"></span>
+            </div>
+            <div style="font-size: 15px; line-height: 1.6; margin-bottom: 16px;" id="conflict-desc"></div>
+            <div class="tags" id="conflict-tags"></div>
+          </div>
+
+          <div class="panel" id="action-panel" style="display: none;">
+            <div class="panel-title">Action Configuration</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Intent</label>
+                <select class="form-control" id="f-intent">
+                  <option value="route_message">route_message</option>
+                  <option value="propose_plan">propose_plan</option>
+                  <option value="reschedule_event" selected>reschedule_event</option>
+                  <option value="delegate_task">delegate_task</option>
+                  <option value="ask_clarification">ask_clarification</option>
+                  <option value="finalize_itinerary">finalize_itinerary</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Owner</label>
+                <select class="form-control" id="f-owner">
+                  <option value="self">self</option>
+                  <option value="work" selected>work</option>
+                  <option value="family">family</option>
+                  <option value="travel">travel</option>
+                  <option value="finance">finance</option>
+                  <option value="legal">legal</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select class="form-control" id="f-priority">
+                  <option value="low">low</option>
+                  <option value="normal">normal</option>
+                  <option value="high" selected>high</option>
+                  <option value="urgent">urgent</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Needs Clarification</label>
+                <select class="form-control" id="f-clarify">
+                  <option value="false" selected>No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">Proposed Slot</label>
+                <input type="text" class="form-control" id="f-slot" placeholder="e.g. after 20:30">
+              </div>
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">Message</label>
+                <input type="text" class="form-control" id="f-msg" placeholder="Action message..."
+                  value="Resolving conflict with appropriate action.">
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; border-top: 1px solid var(--border); padding-top: 20px;">
+              <button class="btn btn-primary" onclick="submitAction()">Execute Action</button>
+              <button class="btn btn-secondary" onclick="autoResolve()">Auto-Resolve Pipeline</button>
+            </div>
+          </div>
+
+          <div class="panel hidden" id="done-panel">
+            <div class="task-selector-box" style="margin:0 auto; padding: 32px; border: none; background: transparent;">
+              <svg class="task-selector-icon" style="color:var(--green)" viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              <div class="task-selector-title">Pipeline Complete</div>
+              <div class="task-selector-desc">All conflicts resolved. Average Reward: <span id="final-score"
+                  class="text-green" style="font-weight:600;font-size:16px;"></span></div>
+            </div>
+          </div>
+
+          <div class="panel" id="log-panel" style="display: none;">
+            <div class="panel-title">System Execution Log</div>
+            <div class="console" id="step-log">
+              <div class="log-line">System initialized. Awaiting commands...</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PAGE: RESULTS -->
+        <div id="page-results" class="hidden">
+          <div class="panel">
+            <div class="panel-title">Training Analytics (SFT + GRPO)</div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Easy</th>
+                  <th>Medium</th>
+                  <th>Hard</th>
+                  <th>Average</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Untrained 3B</td>
+                  <td>0.5613</td>
+                  <td>0.6346</td>
+                  <td>0.4741</td>
+                  <td>0.5567</td>
+                  <td><span style="color:var(--yellow)">Baseline</span></td>
+                </tr>
+                <tr>
+                  <td>GRPO only</td>
+                  <td>0.5247</td>
+                  <td>0.4704</td>
+                  <td>0.4514</td>
+                  <td>0.4822</td>
+                  <td><span style="color:var(--red)">Failed</span></td>
+                </tr>
+                <tr>
+                  <td>After SFT + GRPO</td>
+                  <td>1.0000</td>
+                  <td>1.0000</td>
+                  <td>1.0000</td>
+                  <td>1.0000</td>
+                  <td><span style="color:var(--green)">Optimized</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function enterApp() {
+      const landing = document.getElementById('landing-page');
+      const app = document.getElementById('app');
+      landing.style.opacity = '0';
+      landing.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        landing.style.display = 'none';
+        app.style.display = 'flex';
+        setTimeout(() => { app.style.opacity = '1'; }, 50);
+      }, 500);
+    }
+
+    const API = window.location.origin;
+    let currentConflict = null, stepCount = 0, totalReward = 0, rewards = [];
+
+    function showPage(id, element) {
+      document.querySelectorAll('[id^=page-]').forEach(p => p.classList.add('hidden'));
+      document.getElementById('page-' + id).classList.remove('hidden');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (element) {
+        element.classList.add('active');
+      } else if (event && event.currentTarget && event.currentTarget.classList) {
+        event.currentTarget.classList.add('active');
+      }
+    }
+
+    function updatePipeline(step) {
+      const steps = ['select', 'reset', 'resolve', 'score'];
+      const idx = steps.indexOf(step);
+      steps.forEach((s, i) => {
+        const el = document.getElementById('pipe-' + s);
+        if (i < idx) {
+          el.className = 'pipeline-step done';
+          el.querySelector('.step-sub').innerText = 'Complete';
+        } else if (i === idx) {
+          el.className = 'pipeline-step active';
+          el.querySelector('.step-sub').innerText = 'In Progress';
+        } else {
+          el.className = 'pipeline-step';
+          el.querySelector('.step-sub').innerText = 'Pending';
+        }
+      });
+    }
+
+    async function selectTask(taskId) {
+      try {
+        updatePipeline('reset');
+        const res = await fetch(API + '/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ task_name: taskId })
+        });
+        const data = await res.json();
+        currentConflict = data; stepCount = 0; totalReward = 0; rewards = [];
+
+        document.getElementById('step-log').innerHTML = '<div class="log-line">Task loaded: <span class="log-val">' + taskId + '</span></div>';
+
+        updatePipeline('resolve');
+        showPage('playground');
+        // Set active nav manually since event target is a button
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.nav-item')[1].classList.add('active');
+
+        updatePlayground(data);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    function updatePlayground(data) {
+      const c = data.observation?.current_conflict;
+      document.getElementById('conflict-panel').style.display = 'block';
+      document.getElementById('action-panel').style.display = 'block';
+      document.getElementById('log-panel').style.display = 'block';
+      document.getElementById('done-panel').classList.add('hidden');
+
+      if (data.done) {
+        updatePipeline('score');
+        document.getElementById('conflict-panel').style.display = 'none';
+        document.getElementById('action-panel').style.display = 'none';
+        document.getElementById('done-panel').classList.remove('hidden');
+        const avg = (totalReward / Math.max(rewards.length, 1)).toFixed(4);
+        document.getElementById('final-score').innerText = avg;
+        document.getElementById('pipe-score').classList.add('done');
+        document.getElementById('pipe-score').querySelector('.step-sub').innerText = avg;
+        return;
+      }
+
+      if (c) {
+        document.getElementById('conflict-counter').innerText = `(${(data.observation?.step_index || 0) + 1} of ${data.observation?.max_steps || '?'})`;
+        document.getElementById('conflict-desc').innerText = c.summary || '';
+        document.getElementById('conflict-tags').innerHTML = (c.constraints || []).map(x => `<span class="tag">${x}</span>`).join('');
+      }
+    }
+
+    async function submitAction() {
+      const action = {
+        intent: document.getElementById('f-intent').value,
+        owner: document.getElementById('f-owner').value,
+        priority: document.getElementById('f-priority').value,
+        proposed_slot: document.getElementById('f-slot').value || '',
+        needs_clarification: document.getElementById('f-clarify').value === 'true',
+        message_template: document.getElementById('f-msg').value || 'Action taken.'
+      };
+      try {
+        const res = await fetch(API + '/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(action)
+        });
+        const data = await res.json();
+        stepCount++;
+        const rw = data.reward || 0;
+        rewards.push(rw); totalReward += rw;
+
+        const log = document.getElementById('step-log');
+        const color = rw > 0.7 ? 'var(--green)' : rw > 0.4 ? 'var(--yellow)' : 'var(--red)';
+        log.innerHTML += `<div class="log-line">>&nbsp;[Step ${stepCount}] Action: <span class="log-val">${action.intent}</span> | Reward: <span style="color:${color}">${rw.toFixed(4)}</span></div>`;
+        log.scrollTop = log.scrollHeight;
+
+        currentConflict = data;
+        updatePlayground(data);
+      } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function autoResolve() {
+      while (currentConflict && !currentConflict.done && currentConflict.observation?.current_conflict) {
+        const c = currentConflict.observation.current_conflict;
+        const text = (c.summary + ' ' + (c.constraints || []).join(' ')).toLowerCase();
+        let intent = 'route_message', owner = 'self', priority = 'normal', slot = '', clarify = false;
+
+        if (text.includes('missing') || text.includes('unclear') || text.includes('timezone')) {
+          intent = 'ask_clarification'; owner = 'work'; priority = 'high'; clarify = true;
+        } else if (text.includes('overlap') || text.includes('delay') || text.includes('reservation')) {
+          intent = 'reschedule_event'; owner = 'travel'; priority = 'high'; slot = 'after 20:30';
+        } else if (text.includes('pickup') || text.includes('gift')) {
+          intent = 'delegate_task'; owner = 'family'; priority = 'normal';
+        } else if (text.includes('payment') || text.includes('insurance')) {
+          intent = 'route_message'; owner = 'finance'; priority = 'urgent';
+        } else if (text.includes('final') || text.includes('itinerary')) {
+          intent = 'finalize_itinerary'; owner = 'self'; priority = 'high';
+        }
+
+        document.getElementById('f-intent').value = intent;
+        document.getElementById('f-owner').value = owner;
+        document.getElementById('f-priority').value = priority;
+        document.getElementById('f-slot').value = slot;
+        document.getElementById('f-clarify').value = clarify ? 'true' : 'false';
+
+        await submitAction();
+        await new Promise(r => setTimeout(r, 400));
+      }
+    }
+  </script>
+</body>
+
+</html>
+}
+</script>
+</body>
+
+</html><!-- Trigger HF Push -->

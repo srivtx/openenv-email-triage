@@ -1,0 +1,301 @@
+{
+  "tasks": [
+    {
+      "id": "easy_evening_planner",
+      "title": "Easy: Evening Conflict Cleanup",
+      "difficulty": "easy",
+      "description": "Resolve straightforward evening overlaps with clear ownership.",
+      "max_steps": 5,
+      "conflicts": [
+        {
+          "conflict_id": "E-1001",
+          "source": "calendar",
+          "summary": "Family dinner at 7:30 PM overlaps with urgent incident review at 7:00 PM.",
+          "constraints": [
+            "incident review must happen today",
+            "family dinner should still happen"
+          ],
+          "expected": {
+            "intent": "reschedule_event",
+            "owner": "work",
+            "priority": "high",
+            "require_slot": true,
+            "expected_slot_hint": "after 20:30",
+            "block_if_missing_context": false,
+            "required_keywords": ["reschedule", "incident"]
+          }
+        },
+        {
+          "conflict_id": "E-1002",
+          "source": "message",
+          "summary": "Medication pickup and school commute overlap at 5:30 PM.",
+          "constraints": [
+            "pickup must happen before 8 PM",
+            "user still has back-to-back calls"
+          ],
+          "expected": {
+            "intent": "delegate_task",
+            "owner": "family",
+            "priority": "normal",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": false,
+            "required_keywords": ["delegate", "pickup"]
+          }
+        },
+        {
+          "conflict_id": "E-1003",
+          "source": "planner",
+          "summary": "Most blockers cleared; user asks for final tonight itinerary summary.",
+          "constraints": [
+            "include final order of tasks",
+            "confirm critical deadlines"
+          ],
+          "expected": {
+            "intent": "finalize_itinerary",
+            "owner": "self",
+            "priority": "normal",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": false,
+            "required_keywords": ["timeline", "confirm"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "medium_multi_party_negotiation",
+      "title": "Medium: Multi-Party Negotiation",
+      "difficulty": "medium",
+      "description": "Resolve mixed work and personal conflicts requiring clarification and planning.",
+      "max_steps": 8,
+      "conflicts": [
+        {
+          "conflict_id": "M-2001",
+          "source": "email",
+          "summary": "Client requests 9 AM demo, but timezone and participant list are missing.",
+          "constraints": [
+            "cannot confirm demo without timezone",
+            "must avoid no-show risk"
+          ],
+          "expected": {
+            "intent": "ask_clarification",
+            "owner": "work",
+            "priority": "high",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": true,
+            "required_keywords": ["clarify", "timezone"]
+          }
+        },
+        {
+          "conflict_id": "M-2002",
+          "source": "calendar",
+          "summary": "Need a concrete alternative slot for product demo this morning.",
+          "constraints": [
+            "must be before lunch",
+            "engineering lead must attend"
+          ],
+          "expected": {
+            "intent": "propose_plan",
+            "owner": "work",
+            "priority": "high",
+            "require_slot": true,
+            "expected_slot_hint": "11:30",
+            "block_if_missing_context": false,
+            "required_keywords": ["proposal", "slot"]
+          }
+        },
+        {
+          "conflict_id": "M-2003",
+          "source": "travel-app",
+          "summary": "Flight check-in opens exactly when dinner reservation starts.",
+          "constraints": [
+            "check-in cannot be missed",
+            "reservation can move by at most 45 minutes"
+          ],
+          "expected": {
+            "intent": "reschedule_event",
+            "owner": "travel",
+            "priority": "high",
+            "require_slot": true,
+            "expected_slot_hint": "after 21:00",
+            "block_if_missing_context": false,
+            "required_keywords": ["reschedule", "check-in"]
+          }
+        },
+        {
+          "conflict_id": "M-2004",
+          "source": "todo",
+          "summary": "Gift pickup due today but user is in all-day workshop.",
+          "constraints": [
+            "store closes at 8 PM",
+            "must confirm pickup completion"
+          ],
+          "expected": {
+            "intent": "delegate_task",
+            "owner": "family",
+            "priority": "normal",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": false,
+            "required_keywords": ["delegate", "gift"]
+          }
+        },
+        {
+          "conflict_id": "M-2005",
+          "source": "planner",
+          "summary": "User requests final consolidated plan for all commitments.",
+          "constraints": [
+            "include owners",
+            "include fallback if one task fails"
+          ],
+          "expected": {
+            "intent": "finalize_itinerary",
+            "owner": "self",
+            "priority": "high",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": false,
+            "required_keywords": ["timeline", "fallback"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "hard_cascade_replanning",
+      "title": "Hard: Cascade Replanning",
+      "difficulty": "hard",
+      "description": "Handle cascading disruptions where one decision changes downstream constraints.",
+      "max_steps": 12,
+      "conflicts": [
+        {
+          "conflict_id": "H-3001",
+          "source": "calendar",
+          "summary": "Board review overlaps with school pickup and cannot be skipped.",
+          "constraints": [
+            "board review mandatory",
+            "school pickup must be covered"
+          ],
+          "expected": {
+            "intent": "reschedule_event",
+            "owner": "work",
+            "priority": "urgent",
+            "require_slot": true,
+            "expected_slot_hint": "after 18:30",
+            "block_if_missing_context": false,
+            "required_keywords": ["reschedule", "board"]
+          }
+        },
+        {
+          "conflict_id": "H-3002",
+          "source": "legal-email",
+          "summary": "Visa document request has missing attachment and ambiguous deadline timezone.",
+          "constraints": [
+            "cannot submit without correct form",
+            "late submission has legal penalty"
+          ],
+          "expected": {
+            "intent": "ask_clarification",
+            "owner": "legal",
+            "priority": "urgent",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": true,
+            "required_keywords": ["clarify", "deadline"]
+          }
+        },
+        {
+          "conflict_id": "H-3003",
+          "source": "travel-app",
+          "summary": "Hotel cancel window closes in 30 minutes while user is in a live call.",
+          "constraints": [
+            "cancellation must happen now",
+            "refund requires explicit confirmation"
+          ],
+          "expected": {
+            "intent": "delegate_task",
+            "owner": "travel",
+            "priority": "urgent",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": false,
+            "required_keywords": ["delegate", "cancel"]
+          }
+        },
+        {
+          "conflict_id": "H-3004",
+          "source": "calendar",
+          "summary": "Investor dinner and family exam prep overlap within same hour.",
+          "constraints": [
+            "investor dinner cannot be missed",
+            "family exam prep needs at least 30 minutes"
+          ],
+          "expected": {
+            "intent": "propose_plan",
+            "owner": "self",
+            "priority": "high",
+            "require_slot": true,
+            "expected_slot_hint": "19:30",
+            "block_if_missing_context": false,
+            "required_keywords": ["proposal", "split"]
+          }
+        },
+        {
+          "conflict_id": "H-3005",
+          "source": "finance-alert",
+          "summary": "Insurance renewal payment failed and grace period ends tonight.",
+          "constraints": [
+            "payment must be completed today",
+            "late fee applies after midnight"
+          ],
+          "expected": {
+            "intent": "route_message",
+            "owner": "finance",
+            "priority": "urgent",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": false,
+            "required_keywords": ["payment", "renewal"]
+          }
+        },
+        {
+          "conflict_id": "H-3006",
+          "source": "message",
+          "summary": "Driver availability changed, causing dinner commute delay.",
+          "constraints": [
+            "arrival must stay before reservation cutoff",
+            "backup transport needed if delay exceeds 20 minutes"
+          ],
+          "expected": {
+            "intent": "reschedule_event",
+            "owner": "travel",
+            "priority": "high",
+            "require_slot": true,
+            "expected_slot_hint": "after 21:15",
+            "block_if_missing_context": false,
+            "required_keywords": ["reschedule", "transport"]
+          }
+        },
+        {
+          "conflict_id": "H-3007",
+          "source": "planner",
+          "summary": "Generate final consolidated itinerary with owner assignments and risk notes.",
+          "constraints": [
+            "must include fallback decisions",
+            "must list high-risk items first"
+          ],
+          "expected": {
+            "intent": "finalize_itinerary",
+            "owner": "self",
+            "priority": "urgent",
+            "require_slot": false,
+            "expected_slot_hint": "",
+            "block_if_missing_context": false,
+            "required_keywords": ["timeline", "risk"]
+          }
+        }
+      ]
+    }
+  ]
+}

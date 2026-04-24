@@ -1,0 +1,64 @@
+schema_version: '0.1'
+name: personal-assistant-conflict-resolver-v2
+benchmark: personal_assistant_conflict_resolution
+description: |
+  A long-horizon personalized task environment where an agent resolves overlapping
+  commitments with deterministic verifiers and anti-hacking reward checks.
+version: 0.2.0
+tags:
+  - openenv
+  - personalized-tasks
+  - long-horizon
+  - scheduling
+  - conflict-resolution
+
+runtime:
+  type: docker
+  dockerfile: Dockerfile
+  container_port: 7860
+
+api:
+  health:
+    method: GET
+    path: /health
+  reset:
+    method: POST
+    path: /reset
+  step:
+    method: POST
+    path: /step
+  state:
+    method: GET
+    path: /state
+
+implementation:
+  module: assistant_conflict_env.environment
+  class: PersonalAssistantConflictEnv
+
+models:
+  observation: assistant_conflict_env.models.ConflictObservation
+  action: assistant_conflict_env.models.ConflictAction
+  reward: assistant_conflict_env.models.ConflictReward
+
+tasks:
+  - id: easy_evening_planner
+    difficulty: easy
+    objective: Resolve straightforward evening schedule conflicts.
+  - id: medium_multi_party_negotiation
+    difficulty: medium
+    objective: Resolve mixed work/personal conflicts with missing context.
+  - id: hard_cascade_replanning
+    difficulty: hard
+    objective: Handle cascading disruptions with strict constraints and tradeoffs.
+
+graders:
+  type: deterministic
+  module: assistant_conflict_env.graders
+  function: grade_task_decisions
+
+inference:
+  script: inference.py
+  required_env:
+    - API_BASE_URL
+    - MODEL_NAME
+    - HF_TOKEN
