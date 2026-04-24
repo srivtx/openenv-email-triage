@@ -62,3 +62,4 @@ inference:
     - API_BASE_URL
     - MODEL_NAME
     - HF_TOKEN
+# Trigger push
