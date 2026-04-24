@@ -35,6 +35,7 @@ _static_dir = Path(__file__).parent / "static"
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/web", response_class=HTMLResponse)
 async def root():
     index = _static_dir / "index.html"
     if index.exists():
