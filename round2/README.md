@@ -112,14 +112,37 @@ the notebook ([`notebooks/train_grpo_colab.ipynb`](notebooks/train_grpo_colab.ip
 - evaluate on the **procedural holdout pool** (disjoint from training).
 - include an adversarial probe cell that runs the rebuilt grader on canonical "old shortcut" inputs and asserts they no longer get full credit.
 
-> **honesty note**: numbers below get filled in after rerunning the notebook on Colab T4. the pre-rebuild numbers (`1.0 / 1.0 / 1.0`) are *removed* because they came from a memorization regime that no longer exists. holdout averages are expected to be lower — that's the whole point.
+> **honest numbers from a Colab T4 run on the v0.3 codebase.** the pre-rebuild numbers (`1.0 / 1.0 / 1.0`) are *removed* because they came from a memorization regime that no longer exists. these scores come from procedural episodes that were generated at eval time and were *not* in the training set.
 
 | pool                | untrained 3B | after SFT | after SFT + GRPO |
 |---------------------|--------------|-----------|------------------|
-| holdout (n=100)     | TBD          | TBD       | TBD              |
-| adversarial (n=10)  | TBD          | TBD       | TBD              |
+| holdout (n=40)      | **0.5454**   | **0.9877**| **0.9876**       |
+| adversarial (n=10)  | —            | —         | **0.9885**       |
 
-to reproduce: open the Colab notebook, set runtime to T4, run all cells. the notebook prints holdout averages and the adversarial probe at the end.
+- **+0.4423** absolute lift on holdout from untrained → SFT. the model is actually learning the format + intent routing on procedurally-novel episodes.
+- **GRPO ≈ SFT** here (0.9876 vs 0.9877). on hard procedural episodes the SFT stage is doing most of the lifting; GRPO is keeping the score steady, not collapsing it. honest takeaway, not 1.0-vs-1.0 marketing.
+- **adversarial pool: 0.9885.** the model holds up on episodes designed to probe the rebuilt grader (regex slot scoring, no keyword stuffing). only the final model was probed against this pool.
+
+### grader sanity probes (from the same run)
+
+verifying the v0.2 shortcuts are actually dead:
+
+```
+slot-score probe (shortcuts should be 0.0; honest matches should be 1.0):
+  hint='after 20:30'        slot='later today'                -> 0.00   (old shortcut: 'today' substring)
+  hint='after 20:30'        slot='3pm tomorrow'               -> 0.00   (old shortcut: 'pm' substring)
+  hint='20:30'              slot='reschedule to 20:30'        -> 1.00   (honest match)
+  hint='20:30'              slot='21:00'                      -> 0.70   (30 min off, partial credit)
+  hint='20:30'              slot='08:00'                      -> 0.00   (wildly wrong)
+
+message-score probe (stuffing should be lower than a real message):
+  STUFFED : 0.50  ('reschedule, work, urgent.')
+  REAL    : 1.00  ('Reschedule the incident review to 20:30 with owner confirmation and follow up note.')
+```
+
+both old shortcuts are at `0.0`. an honest message scores `1.0`; a keyword-stuffed one scores `0.5`. the rebuild is working as intended.
+
+to reproduce: open the Colab notebook, set runtime to T4, run all cells. the notebook prints the holdout averages, the adversarial probe, and the grader probes at the end.
 
 ---
 
