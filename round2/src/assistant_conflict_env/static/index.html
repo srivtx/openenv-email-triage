@@ -888,45 +888,58 @@
         <!-- PAGE: RESULTS -->
         <div id="page-results" class="hidden">
           <div class="panel">
-            <div class="panel-title">Training Analytics (SFT + GRPO)</div>
+            <div class="panel-title">Training Analytics (SFT + GRPO, v0.3 rebuild)</div>
+            <div style="font-size: 13px; line-height: 1.6; margin-bottom: 16px; opacity: 0.8;">
+              Numbers below come from the procedural <strong>holdout</strong> pool (seeds 9000-9099, disjoint from the
+              training pool 1000-1999) and the <strong>adversarial</strong> probe pool (seeds 5000-5009).
+              The pre-rebuild scores (<code>1.0 / 1.0 / 1.0</code>) were removed — they came from a memorization
+              regime where the SFT and eval sets were the same 15 fixtures. Honest numbers fill in after rerunning
+              <code>notebooks/train_grpo_colab.ipynb</code> on a Colab T4.
+            </div>
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Model</th>
-                  <th>Easy</th>
-                  <th>Medium</th>
-                  <th>Hard</th>
-                  <th>Average</th>
+                  <th>Pool</th>
+                  <th>Untrained 3B</th>
+                  <th>After SFT</th>
+                  <th>After SFT + GRPO</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Untrained 3B</td>
-                  <td>0.5613</td>
-                  <td>0.6346</td>
-                  <td>0.4741</td>
-                  <td>0.5567</td>
-                  <td><span style="color:var(--yellow)">Baseline</span></td>
+                  <td>Holdout (n=100)</td>
+                  <td>TBD</td>
+                  <td>TBD</td>
+                  <td>TBD</td>
+                  <td><span style="color:var(--yellow)">Pending T4 run</span></td>
                 </tr>
                 <tr>
-                  <td>GRPO only</td>
-                  <td>0.5247</td>
-                  <td>0.4704</td>
-                  <td>0.4514</td>
-                  <td>0.4822</td>
-                  <td><span style="color:var(--red)">Failed</span></td>
-                </tr>
-                <tr>
-                  <td>After SFT + GRPO</td>
-                  <td>1.0000</td>
-                  <td>1.0000</td>
-                  <td>1.0000</td>
-                  <td>1.0000</td>
-                  <td><span style="color:var(--green)">Optimized</span></td>
+                  <td>Adversarial (n=10)</td>
+                  <td>TBD</td>
+                  <td>TBD</td>
+                  <td>TBD</td>
+                  <td><span style="color:var(--yellow)">Pending T4 run</span></td>
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="panel" style="margin-top: 16px;">
+            <div class="panel-title">What v0.3 actually delivers</div>
+            <div style="font-size: 13px; line-height: 1.7;">
+              <ul style="margin: 0; padding-left: 18px;">
+                <li><strong>World state across steps</strong> — calendar mutations, pending clarifications, and
+                  cascade queue all carry forward; not bookkeeping but actual state.</li>
+                <li><strong>Two-step partial observability</strong> — <code>ask_clarification</code> now keeps the
+                  same conflict at the front of the queue and re-presents it next step with the revealed info.</li>
+                <li><strong>Real cascades</strong> — rescheduling past 18:00 with <code>owner=work</code> spawns a
+                  follow-on school-pickup conflict on the queue. Tested under perfect-play oracle.</li>
+                <li><strong>Rebuilt grader</strong> — regex-strict <code>HH:MM</code> slot scoring, length+verb+diversity
+                  message scoring, no 0.10 reward floor.</li>
+                <li><strong>Disjoint train/holdout/adversarial seed pools</strong> — asserted at module import.</li>
+              </ul>
+            </div>
           </div>
         </div>
 
