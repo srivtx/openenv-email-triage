@@ -1,0 +1,8 @@
+# Heavy local-inference deps. Install ONLY if you plan to run inference.py
+# with MODEL_PATH set (i.e. loading the trained Qwen 2.5 3B Instruct + LoRA
+# locally). The deployed environment server does not need these.
+torch>=2.4.0
+transformers>=4.46.0
+peft>=0.13.0
+accelerate>=1.0.0
+sentencepiece>=0.2.0

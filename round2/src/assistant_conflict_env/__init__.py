@@ -1,6 +1,18 @@
+from .conflict_generator import generate_episode, initial_calendar_for
 from .environment import PersonalAssistantConflictEnv
+from .eval_set import (
+    ADVERSARIAL_SEEDS,
+    HOLDOUT_SEEDS,
+    TRAIN_SEEDS,
+    adversarial_episodes,
+    holdout_episodes,
+    train_episodes,
+)
 from .models import (
     ActionIntent,
+    CalendarEvent,
+    CascadeRule,
+    ClarificationSpec,
     ConflictAction,
     ConflictCase,
     ConflictDecision,
@@ -10,13 +22,19 @@ from .models import (
     ConflictState,
     ConflictStepResult,
     Owner,
+    PendingClarification,
     Priority,
     TaskDefinition,
+    WorldState,
 )
 from .tasks import DEFAULT_TASK_ID, get_task, list_tasks
 
 __all__ = [
     "ActionIntent",
+    "ADVERSARIAL_SEEDS",
+    "CalendarEvent",
+    "CascadeRule",
+    "ClarificationSpec",
     "ConflictAction",
     "ConflictCase",
     "ConflictDecision",
@@ -26,10 +44,19 @@ __all__ = [
     "ConflictState",
     "ConflictStepResult",
     "DEFAULT_TASK_ID",
+    "HOLDOUT_SEEDS",
     "Owner",
+    "PendingClarification",
     "PersonalAssistantConflictEnv",
     "Priority",
     "TaskDefinition",
+    "TRAIN_SEEDS",
+    "WorldState",
+    "adversarial_episodes",
+    "generate_episode",
     "get_task",
+    "holdout_episodes",
+    "initial_calendar_for",
     "list_tasks",
+    "train_episodes",
 ]

@@ -1,107 +1,152 @@
-# Teaching a 3B Model to Unfck Your Calendar — With RL
+# Teaching a 3B Model to Plan Through a Chaotic Afternoon — With RL
 
-*OpenEnv Hackathon 2026 | Team Agent (1) *
-
----
-
-okay so here's the thing — every AI assistant out there can set a timer or read you the weather. cool. but try asking one to figure out that your board review overlaps with school pickup, your visa deadline has a missing attachment, AND your insurance payment is about to expire... all at the same time.
-
-it breaks. every single one. because they handle one request at a time. they don't *plan*.
-
-so we built an RL environment that teaches models to do exactly that.
-
-## what we actually built
-
-a simulated "worst day ever" for a personal assistant. 15 real conflicts across 3 difficulty levels:
-
-- **easy**: dinner overlaps with a work incident review. medication pickup clashes with school commute. straightforward stuff.
-- **medium**: a client demo has missing timezone info (should the model just guess? no — it should ASK). flight check-in overlaps with dinner. gift pickup but you're stuck in a workshop.
-- **hard**: absolute chaos. board review vs school pickup. visa deadline with missing docs. hotel cancellation window closing while you're on a live call. insurance payment failing. everything hits at once and one wrong call breaks everything downstream.
-
-the model has to look at each conflict and decide:
-- **what to do** — reschedule? delegate? ask for more info? just route it?
-- **who handles it** — work, family, travel, finance, legal, or yourself?
-- **how urgent** — low, normal, high, urgent?
-- **when** — propose an actual time slot if rescheduling
-
-that's 6 possible intents × 6 owners × 4 priorities = hundreds of combinations per conflict. and they cascade — rescheduling one thing changes the constraints on everything else.
-
-## the reward engineering (the interesting part)
-
-we didn't just do pass/fail. that's useless for learning. instead, we decomposed the reward into 6 weighted components:
-
-| signal | weight | what it checks |
-|---|---|---|
-| intent correctness | 34% | did you pick the right action type? |
-| owner correctness | 20% | did you assign the right person? |
-| priority accuracy | 15% | right urgency? (partial credit for being close) |
-| slot compliance | 14% | valid time slot if one was needed? |
-| clarification behavior | 10% | did you ask when info was missing? |
-| message quality | 7% | relevant keywords in your message? |
-
-and then 5 anti-gaming penalties because models WILL try to hack your reward:
-
-- **repeat spam** (-0.05): stops the model from just saying "reschedule" for everything
-- **premature finalize** (-0.08): stops it from ending the episode early to lock in a mediocre score  
-- **clarification spam** (-0.03): stops it from asking for clarification on everything to avoid making decisions
-- **missing slot** (-0.05): if you're rescheduling, you better propose an actual time
-- **lazy messages** (-0.04): one-word responses don't fly
-
-the priority scoring gives partial credit — if the expected priority is "high" and you say "urgent", you get 0.5 instead of 0. because being one level off is a reasonable judgment call, not a catastrophic failure. this is textbook reward shaping and it actually helps the model learn faster.
-
-## how we trained it
-
-**model**: Qwen 2.5 3B Instruct (4-bit quantized via Unsloth — fits on a free Colab T4)
-
-**approach**: SFT → GRPO (two-stage)
-1. first, supervised fine-tuning on the correct answers so the model learns the JSON output format
-2. then GRPO (Group Relative Policy Optimization) where the model generates 8 responses per conflict, scores all of them against the real environment, and reinforces the best ones
-
-**why GRPO?** no critic network needed (saves GPU memory), works natively with TRL, and the "generate multiple → compare → reinforce best" loop maps perfectly to our environment's deterministic grading.
-
-only 0.96% of the model's parameters are trained (LoRA, r=16). the rest stays frozen. small adapter, big impact.
-
-## results
-
-so we actually failed the first time lol. tried GRPO straight on the raw model — training reward curve looked sick (0.26 → 0.46, +79%) but when we evaluated? the model scored WORSE. classic reward hacking. it was generating text that gamed the training scorer but couldn't produce clean JSON in eval.
-
-the fix? same recipe as ChatGPT: **SFT first, then RL.**
-
-taught the model the correct JSON format via supervised fine-tuning, THEN ran GRPO on top. night and day difference:
-
-| model | easy | medium | hard | avg |
-|---|---|---|---|---|
-| untrained 3B | 0.5613 | 0.6346 | 0.4741 | **0.5567** |
-| GRPO only (broke it lol) | 0.5247 | 0.4704 | 0.4514 | **0.4822** ↓ |
-| after SFT | 1.0000 | 1.0000 | 1.0000 | **1.0000** ↑ |
-| after SFT + GRPO | 1.0000 | 1.0000 | 1.0000 | **1.0000** ↑ |
-
-**+80% improvement.** from barely understanding the task to nailing every conflict.
-
-yeah the 1.0 is because the model memorized 15 correct answers — but that's literally how RL environments work. no train/test split. the model solved the environment. with more conflicts + onsite compute, GRPO kicks in for real generalization.
-
-## the round 1 → round 2 arc
-
-in round 1, we built an email triage environment — single emails, single decisions. classify, route, done.
-
-round 2 is the natural evolution: what happens when the inbox explodes? when things conflict? when you need to plan across multiple competing priorities and handle missing information?
-
-same OpenEnv foundation (reset/step/state), same deployment pipeline (HF Spaces + Docker), but way harder decision-making. from "sort this email" to "manage my entire chaotic afternoon."
-
-## what's next
-
-with more compute (onsite credits!), the obvious extensions:
-- more conflicts, more task varieties
-- curriculum learning — start on easy, gradually increase difficulty
-- connect to real calendar APIs for live conflict data
-- preference learning — different people prioritize differently
-
-## links
-
-- 🔗 **environment**: [HuggingFace Space](https://huggingface.co/spaces/srivtx/openenv-conflict-resolver-v2)
-- 📓 **training notebook**: [Colab](link-to-colab)
-- 📖 **full docs**: see `/docs` in the repo (8 chapters, from Python basics to full architecture)
+*OpenEnv Hackathon 2026 | Team Agent (1)*
 
 ---
 
-*built with love, too much caffeine, and a T4 GPU that was trying its best* ☕
+Every AI assistant out there can set a timer or read you the weather. Cool. But hand one a real afternoon — board review overlapping school pickup, visa deadline with a missing attachment, insurance payment failing, hotel cancel window closing — and it falls apart. They handle one request at a time. They don't *plan*.
+
+So we built an RL environment that teaches models to do exactly that. And then we got a brutal external code review that pointed out our v0.2 was, in substance, a deployed dataset with a scoring function — not an RL environment. The review was right. So we rebuilt it.
+
+This is the story of v0.3, which is the version actually worth reading about.
+
+## What was wrong with v0.2
+
+A short version of the (correct) critique:
+
+- **Same conflicts for SFT and eval.** 15 static fixtures. Train on them, eval on them, declare victory at 1.0. That's memorization, not learning.
+- **"Long-horizon" was independent classification.** Each step was decoupled. State didn't carry over. Decisions had no downstream effect.
+- **"Partial observability" was pre-labeled.** The "right" answer for missing-info conflicts was already `ask_clarification` — the model just had to detect a keyword.
+- **"Cascading" never cascaded.** The hard task had three "cascade" conflicts that didn't actually depend on each other.
+- **The grader had escape hatches.** Substring slot scoring meant `"3pm tomorrow"` got 0.6 even if the expected slot was `20:30`. Keyword-stuffing in the message field got full credit. A 0.10 reward floor meant the model never saw a 0 even on a fully wrong action.
+- **The notebook had a duplicate cell, `sft_data * 15` over 15 unique examples, and the inference script defaulted to Qwen 72B over an HF Router endpoint instead of the 3B model we said we trained.**
+
+Fair. All true.
+
+## What v0.3 actually does
+
+### Procedural episodes with disjoint train/holdout/adversarial pools
+
+`conflict_generator.generate_episode(seed, difficulty)` builds a `TaskDefinition` from parameterized templates with random variation in times, owners, urgencies, and event names. Difficulty levels add structure on top:
+
+- **easy**: 3 conflicts, no clarifications, no cascades.
+- **medium**: 5 conflicts, ~1 clarification, no cascades.
+- **hard**: 7 conflicts, ~2 clarifications, ~1 cascade rule.
+
+Pools are disjoint by construction:
+
+- **train**: seeds 1000-1999 (1000 episodes) — SFT data + GRPO rollouts.
+- **holdout**: seeds 9000-9099 (100 episodes) — honest generalization eval.
+- **adversarial**: seeds 5000-5009 (10 episodes) — verify shortcut shutdowns.
+
+`assert_split_disjoint()` runs at module import. The split is reproducible from any commit.
+
+### Real world state across steps
+
+`WorldState` carries:
+
+- `calendar`: events with start/end/owner/locked. Mutated when the agent reschedules or proposes a plan.
+- `pending_clarifications`: queued info reveals.
+- `revealed_info`: `conflict_id -> revealed text`.
+- `cascade_queue`: follow-on conflicts the agent has spawned.
+
+The conflict queue is dynamic, not an array index. Conflicts can be re-presented (clarification reveal), and new conflicts can be appended mid-episode (cascade trigger).
+
+### Two-step partial observability
+
+When a conflict has a `ClarificationSpec` and the agent picks `ask_clarification`:
+
+1. **Step N**: env scores the ask, records the revealed info on the case, and **keeps the same conflict at the front of the queue**.
+2. **Step N+1**: env presents the same conflict, with `revealed_info` attached to the summary, and grades against the `post_reveal_expected` action.
+3. **Step N+2**: env advances to the next conflict.
+
+Picking `ask_clarification` when no clarification is warranted now triggers a `clarification_spam` penalty. The "ask everything to be safe" shortcut is closed.
+
+### Real cascades
+
+Each procedural template can carry a `CascadeRule`. Hard-difficulty episodes get a reschedule case where pushing the slot past 18:00 with `owner=work` spawns a follow-on "school pickup uncovered" conflict. The new conflict goes onto the queue and gets resolved like any other. The agent's own decision is what generates the downstream work.
+
+The unit tests assert a cascade fires under perfect-play oracles for `seed=42` (`test_cascade_appends_followup_conflict`).
+
+### Rebuilt grader
+
+- `slot`: regex-strict 24h `HH:MM` parsing. Time-distance scoring (exact = 1.0, ≤30 min = 0.7, ≤60 min = 0.4, ≤120 min = 0.2, else 0.0). The substring shortcut is dead — `_slot_score("after 20:30", "later today", require_slot=True)` returns 0.0.
+- `message`: length + on-topic verb + word-diversity. Keyword stuffing (`"reschedule, work, urgent."`) scores 0.5 instead of 1.0; a real on-topic sentence scores 1.0.
+- Weights: `intent 0.40 / owner 0.20 / slot 0.20 / priority 0.10 / clarification 0.05 / message 0.05`. Documented derivation lives in the module docstring.
+- The 0.10 reward floor is gone. A fully wrong action scores 0.
+
+### Strengthened penalties
+
+- `repetitive_intent` triggers on 3 in a row (was 2; the old check was bypassable by alternating).
+- `premature_finalize` (`finalize_itinerary` with > 1 case left) jumps from 0.08 to 0.15.
+- `terminal_early` (other terminal-ish intents used to short-circuit) is a new −0.05.
+- `clarification_spam` is now aware of `pending_clarifications` and `revealed_info`.
+
+### Inference path
+
+`inference.py` was rewritten to default to the **trained** Qwen 2.5 3B Instruct + LoRA adapter via `transformers` and `peft` when `MODEL_PATH` is set. The HF Router 72B path is still available for baselines but is no longer the default. `EVAL_POOL=holdout` runs honest holdout eval; `EVAL_POOL=adversarial` runs the probe pool.
+
+## Reward design (rebuilt, honestly)
+
+| signal           | weight | what it checks                                                                  |
+|------------------|--------|----------------------------------------------------------------------------------|
+| intent           | 0.40   | exact match — most consequential decision                                       |
+| owner            | 0.20   | exact match — who handles it                                                    |
+| slot             | 0.20   | regex-strict 24h `HH:MM`, time-distance scoring                                 |
+| priority         | 0.10   | partial credit (0.5) for off-by-one — adjacent priorities are defensible        |
+| clarification    | 0.05   | boolean alignment with `block_if_missing_context`                               |
+| message          | 0.05   | length + on-topic verb + word-diversity                                         |
+
+## How we trained it
+
+**Model**: Qwen 2.5 3B Instruct (4-bit quantized via Unsloth — fits a free Colab T4).
+
+**Approach**: SFT then GRPO.
+
+1. SFT on **procedurally generated** train episodes (no `* 15` duplication, no train/eval overlap). Each example uses a varied on-topic message instead of the keyword list verbatim. Clarification cases generate two SFT examples — the initial ask and the post-reveal action — so the model learns to operate in the partial-observability regime.
+2. GRPO on top, using the **env's actual reward** as the GRPO reward. The reward function in the notebook replays the env up to each step, applies the sampled completion, and reads `result.reward`. No placeholder rewards.
+
+LoRA only — `r=16`, ~1% of params trained. The rest stays frozen.
+
+## Results
+
+The notebook prints holdout averages, adversarial averages, and a probe of `_slot_score` and `_message_score` on canonical "old shortcut" inputs.
+
+Numbers will be filled in after rerunning the notebook on Colab T4. We are not reporting v0.2's `1.0 / 1.0 / 1.0` because those numbers came from a memorization regime that no longer exists.
+
+| pool            | untrained 3B | after SFT | after SFT + GRPO |
+|-----------------|--------------|-----------|------------------|
+| holdout (n=100) | TBD          | TBD       | TBD              |
+| adversarial (n=10) | TBD       | TBD       | TBD              |
+
+We expect holdout numbers to be lower than v0.2's `1.0` — that's the point. They will reflect actual generalization to unseen procedural episodes.
+
+## What stayed the same
+
+- The action schema (6 intents, 6 owners, 4 priorities, slot, needs_clarification, message). Backward-compatible for any client that already integrates with the v0.2 API.
+- The OpenEnv `reset` / `step` / `state` interface and the FastAPI server.
+- The Docker + HF Space deployment pipeline.
+- The static fixture tasks for the live UI demo. They're kept around so the deployed Space still has interactive episodes for visitors. They are **not** used for training or evaluation.
+
+## What we wish we'd had time for
+
+- Curriculum: harder episodes for later in training (we have the difficulty knob; we just didn't sweep it).
+- A proper user study or domain-expert pass on the reward weights. The current weights are documented and auditable, but they're still our best judgment, not validated.
+- A bigger procedural template pool. We have ~6 templates plus a finalize template; more variety would help generalization.
+
+## Lessons we'd hammer into a future-self
+
+- If you can't articulate what your environment's *world state* is, it isn't long-horizon. Bookkeeping isn't state.
+- A static fixture is a dataset. The moment you train on it and evaluate on it, you've built a leaderboard for your own homework.
+- Reward floors hide bugs. Ours did.
+- "It works" on three hand-written examples does not generalize. Even fixing it to "it works on 100 procedural examples" is a different kind of "works".
+
+---
+
+## Links
+
+- **Live environment**: [HuggingFace Space](https://huggingface.co/spaces/srivtx/openenv-conflict-resolver-v2)
+- **Training notebook**: `notebooks/train_grpo_colab.ipynb`
+- **Full docs**: see `docs/` (9 chapters from RL basics through the rebuild)
+
+*Built with Unsloth, TRL, and a willingness to delete our own dishonest numbers.*
