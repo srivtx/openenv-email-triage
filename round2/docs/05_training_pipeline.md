@@ -2,7 +2,7 @@
 
 This chapter explains our full training pipeline. We learned the hard way that GRPO alone doesn't work — you need SFT first. This chapter covers both stages, all the libraries, and what actually happens during training.
 
-> **v0.3 rebuild note:** the v0.2 pipeline used `sft_data * 15` over 15 unique answers and evaluated on the same fixtures, which is memorization, not training. The v0.3 notebook (`notebooks/train_grpo_colab.ipynb`) sources SFT data from a procedural train pool of unique episodes (no duplication), uses the env's real reward as the GRPO reward, and evaluates on a disjoint procedural holdout pool plus a small adversarial probe pool. See `src/assistant_conflict_env/eval_set.py` for the seed split and the README "What changed" table for the full delta.
+> **note:** the shipped notebook (`notebooks/train_grpo_colab.ipynb`) sources SFT data from a procedural train pool of unique episodes, uses the env's real reward as the GRPO reward, and evaluates on a disjoint procedural holdout pool plus a small adversarial probe pool. see `src/assistant_conflict_env/eval_set.py` for the seed split.
 
 ---
 

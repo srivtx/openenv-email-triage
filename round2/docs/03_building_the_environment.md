@@ -2,7 +2,7 @@
 
 We'll build `PersonalAssistantConflictEnv` step by step. Each version adds one new concept. By the end, you'll understand every line of the real code.
 
-> **v0.3 rebuild note:** the chapter below describes the *teaching ladder* that arrives at the v0.2 environment (static fixtures, fixed-array conflict queue, simple grader). The shipped v0.3 code goes further: it adds a `WorldState` carried across steps, a procedural conflict generator, two-step partial observability via clarification reveals, and cascade rules that spawn follow-on conflicts in response to the agent's actions. See the README's *"What changed in the v0.3 rebuild"* table and `src/assistant_conflict_env/conflict_generator.py` for the post-rebuild architecture.
+> **note:** this chapter walks through a teaching ladder that arrives at a simple version of the environment for clarity. the shipped code goes further: it adds a `WorldState` carried across steps, a procedural conflict generator, two-step partial observability via clarification reveals, and cascade rules that spawn follow-on conflicts in response to the agent's actions. see `src/assistant_conflict_env/conflict_generator.py` for the full architecture.
 
 ---
 

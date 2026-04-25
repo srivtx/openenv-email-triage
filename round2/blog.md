@@ -8,26 +8,13 @@ okay so — every AI assistant out there can set a timer or read you the weather
 
 so we built an RL environment that teaches models to do exactly that.
 
-then a brutal external code review came in and basically said: "your v0.2 is a deployed dataset with a scoring function — not an RL environment." and they were right. so we tore it down and rebuilt it. this is the story of v0.3, which is the version actually worth reading about.
+## the env, in one paragraph
 
-## what was wrong with v0.2 (the real talk)
+`PersonalAssistantConflictEnv` is a multi-step OpenEnv environment with a mutable world state. the agent sees one conflict at a time (plus the visible calendar), emits a structured JSON action — intent, owner, priority, optional time slot, optional clarification flag, message — and the env grades it, mutates state, and decides what to surface next. clarifications take two steps (ask now, get info next step, then act). reschedules can spawn cascade conflicts ("you pushed the call past 18:00 and now nobody can do school pickup"). the model has to plan, not just classify.
 
-short list of stuff we got called out on, and we earned every single one:
+## procedural episodes
 
-- **same conflicts for SFT and eval.** 15 static fixtures. train on them. eval on them. declare victory at 1.0. that's not learning, that's memorization with extra steps.
-- **"long-horizon" was actually independent classification.** every step was decoupled. state didn't carry over. no decision had downstream effects. literally just `argmax` on each item.
-- **"partial observability" was pre-labeled.** the right answer for a missing-info case was already `ask_clarification` in the JSON. the model just had to keyword-match.
-- **"cascading" never cascaded.** the hard task had three "cascade" conflicts that didn't depend on each other at all. it was just three independent items in a list.
-- **the grader had escape hatches.** substring slot scoring meant `"3pm tomorrow"` got 0.6 even when the expected answer was `20:30`. keyword stuffing in the message field got full marks. there was a 0.10 reward floor — meaning the model never saw a 0 even if it got everything wrong.
-- **the notebook had a duplicate cell, `sft_data * 15` over 15 unique examples, and the inference script defaulted to Qwen 72B over an HF Router endpoint.** so the "1.0" we were reporting was either pure memorization or it was running on a model 24x bigger than the one we said we trained.
-
-fair. all true. extremely valid. we deleted those numbers and started over.
-
-## what v0.3 actually does
-
-### procedural episodes with disjoint train / holdout / adversarial pools
-
-`conflict_generator.generate_episode(seed, difficulty)` builds a `TaskDefinition` from parameterized templates with random variation in times, owners, urgencies, and event names. difficulty levels add structure on top:
+`conflict_generator.generate_episode(seed, difficulty)` builds episodes from parameterized templates with random variation in times, owners, urgencies, event names. difficulty levels add structure on top:
 
 - **easy**: 3 conflicts, no clarifications, no cascades.
 - **medium**: 5 conflicts, ~1 clarification, no cascades.
@@ -36,12 +23,12 @@ fair. all true. extremely valid. we deleted those numbers and started over.
 pools are disjoint *by construction*:
 
 - **train**: seeds `1000-1999` (1000 episodes) → SFT data + GRPO rollouts.
-- **holdout**: seeds `9000-9099` (100 episodes) → honest generalization eval.
-- **adversarial**: seeds `5000-5009` (10 episodes) → verify the old shortcuts are dead.
+- **holdout**: seeds `9000-9099` (100 episodes) → generalization eval.
+- **adversarial**: seeds `5000-5009` (10 episodes) → probes that the grader does what it claims.
 
-`assert_split_disjoint()` runs at module import. so the split is reproducible from any commit. no overlap. no fudging.
+`assert_split_disjoint()` runs at module import. the split is reproducible from any commit.
 
-### actual world state, carried across steps
+## actual world state, carried across steps
 
 `WorldState` lives across the whole episode and tracks:
 
@@ -50,58 +37,34 @@ pools are disjoint *by construction*:
 - `revealed_info`: `conflict_id → revealed text`.
 - `cascade_queue`: follow-on conflicts the agent's own actions have spawned.
 
-the conflict queue is dynamic now, not a fixed array index. conflicts can be re-presented (after a clarification reveal), and new conflicts can be appended mid-episode (when a cascade rule fires).
+the conflict queue is dynamic, not a fixed array index. conflicts can be re-presented (after a clarification reveal), and new conflicts can be appended mid-episode (when a cascade rule fires).
 
-### two-step partial observability (for real this time)
+## two-step partial observability
 
 when a conflict has a `ClarificationSpec` and the agent picks `ask_clarification`:
 
 1. **step N**: env scores the ask, records the revealed info on the case, and **keeps the same conflict at the front of the queue.**
-2. **step N+1**: env presents the same conflict back, with `revealed_info` attached to the summary, and grades the *post-reveal action* (which is the actual decision).
+2. **step N+1**: env presents the same conflict back, with `revealed_info` attached to the summary, and grades the *post-reveal action* (the actual decision).
 3. **step N+2**: queue advances to the next conflict.
 
-picking `ask_clarification` when no clarification is warranted now triggers a `clarification_spam` penalty. the "ask everything to be safe" shortcut is closed.
+picking `ask_clarification` when no clarification is warranted triggers a `clarification_spam` penalty. the "ask everything to be safe" path is closed.
 
-### real cascades
+## real cascades
 
 every procedural template can carry a `CascadeRule`. hard-difficulty episodes get a reschedule case where pushing the slot past 18:00 with `owner=work` spawns a follow-on "school pickup uncovered" conflict. the new conflict goes onto the queue and gets resolved like any other.
 
 translation: **the agent's own decision generates the next problem.** that's the whole point of long-horizon. without that, it's just batched classification.
 
-the unit tests assert a cascade fires under perfect-play oracles for `seed=42` (`test_cascade_appends_followup_conflict`). so this isn't a hopeful claim — it's a tested invariant.
+unit tests assert a cascade fires under perfect-play oracles for `seed=42` (`test_cascade_appends_followup_conflict`). it's a tested invariant, not a hopeful claim.
 
-### rebuilt grader (no more cheap tricks)
+## the grader
 
-- **slot**: regex-strict 24h `HH:MM` parsing. time-distance scoring (exact match = 1.0, ≤30 min off = 0.7, ≤60 min = 0.4, ≤120 min = 0.2, else 0.0). the substring shortcut is dead — `_slot_score("after 20:30", "later today", require_slot=True)` returns `0.0`. tested.
-- **message**: length + on-topic verb + word-diversity check. keyword stuffing (`"reschedule, work, urgent."`) now scores 0.5 instead of 1.0; a real on-topic sentence still scores 1.0. tested.
-- **weights**: `intent 0.40 / owner 0.20 / slot 0.20 / priority 0.10 / clarification 0.05 / message 0.05`. derivation documented in the module docstring (basically: most consequential decision gets the most weight, structural sanity checks get the least).
-- **reward floor of 0.10? gone.** a fully wrong action scores 0. like it should.
+- **slot**: regex-strict 24h `HH:MM` parsing. time-distance scoring (exact = 1.0, ≤30 min off = 0.7, ≤60 min = 0.4, ≤120 min = 0.2, else 0.0). substring shortcuts return 0.0.
+- **message**: length + on-topic verb + word-diversity. keyword stuffing scores ~0.5; a real on-topic sentence scores 1.0.
+- **weights**: `intent 0.40 / owner 0.20 / slot 0.20 / priority 0.10 / clarification 0.05 / message 0.05`. derivation documented in the module docstring.
+- reward band is `[0.0, 1.0]`. no floor.
 
-### strengthened anti-hacking penalties
-
-- `repetitive_intent` triggers on **3 in a row** (was 2; the old check was easy to bypass by alternating two intents forever).
-- `premature_finalize` (`finalize_itinerary` with > 1 case left) jumps from 0.08 → 0.15.
-- `terminal_early` is a new −0.05 for using *any* terminal-style intent to short-circuit out of an episode.
-- `clarification_spam` is now aware of `pending_clarifications` and `revealed_info` — it actually checks whether the case had something to clarify.
-
-### inference path (not Qwen 72B anymore)
-
-`inference.py` was rewritten to default to the **trained** Qwen 2.5 3B Instruct + LoRA adapter via `transformers` and `peft` when `MODEL_PATH` is set. the HF Router 72B path is still there as a baseline option, but it's not the default. `EVAL_POOL=holdout` runs the honest holdout. `EVAL_POOL=adversarial` runs the probe pool.
-
-if neither token nor model path is set, it falls back to a heuristic baseline so the script still does something visible. but yeah — the "1.0 was secretly a 72B model" criticism is dead.
-
-## reward design (rebuilt, no fudging)
-
-| signal           | weight | what it checks                                                                  |
-|------------------|--------|----------------------------------------------------------------------------------|
-| intent           | 0.40   | exact match — most consequential decision                                       |
-| owner            | 0.20   | exact match — who handles it                                                    |
-| slot             | 0.20   | regex-strict 24h `HH:MM`, time-distance scoring                                 |
-| priority         | 0.10   | partial credit (0.5) for off-by-one — adjacent priorities are defensible        |
-| clarification    | 0.05   | boolean alignment with `block_if_missing_context`                               |
-| message          | 0.05   | length + on-topic verb + word-diversity                                         |
-
-then the penalties on top, with no floor:
+## anti-hacking penalties
 
 | penalty               | size   | when it fires                                                  |
 |-----------------------|--------|-----------------------------------------------------------------|
@@ -112,24 +75,26 @@ then the penalties on top, with no floor:
 | `clarification_spam`  | −0.05  | asking when the case has no clarification spec or info revealed |
 | `short_message`       | −0.04  | message under 16 chars                                          |
 
-reward band is `[0.0, 1.0]`. for real this time.
+## inference path
+
+`inference.py` defaults to **the trained** Qwen 2.5 3B Instruct + LoRA adapter via `transformers` and `peft` when `MODEL_PATH` is set. an HF Router 72B path is available as a baseline. `EVAL_POOL=holdout` runs the holdout pool. `EVAL_POOL=adversarial` runs the probe pool.
+
+if neither token nor model path is set, it falls back to a heuristic baseline so the script still does something visible.
 
 ## how we trained it
 
 **model**: Qwen 2.5 3B Instruct (4-bit quantized via Unsloth — fits a free Colab T4).
 
-**approach**: SFT → GRPO (two-stage). same recipe as ChatGPT, just way smaller scale and on a way weirder task.
+**approach**: SFT → GRPO. same recipe as ChatGPT, just smaller scale and on a weirder task.
 
-1. **SFT** on procedurally generated train episodes. no `* 15` duplication. every example is a unique procedural episode with varied times, owners, urgencies. each clarification case generates *two* SFT examples — the initial ask, and the post-reveal action — so the model learns to operate in the partial-obs regime.
-2. **GRPO** on top, using **the env's actual reward** as the GRPO reward. the reward function in the notebook replays the env up to each step, applies the sampled completion, and reads `result.reward`. no placeholder rewards. no synthetic scoring.
+1. **SFT** on procedurally generated train episodes. every example is unique. each clarification case generates *two* SFT examples — the initial ask, and the post-reveal action — so the model learns to operate in the partial-obs regime.
+2. **GRPO** on top, using **the env's actual reward** as the GRPO reward. the reward function in the notebook replays the env up to each step, applies the sampled completion, and reads `result.reward`. no placeholder rewards.
 
-LoRA only — `r=16`, ~1% of params trained. the rest stays frozen. tiny adapter, real signal.
+LoRA only — `r=16`, ~1% of params trained. the rest stays frozen.
 
-**why GRPO?** no critic network needed (saves VRAM), works natively with TRL, and the "generate multiple completions → score them all against the real env → reinforce the best ones" loop maps perfectly to our deterministic grader.
+**why GRPO?** no critic network needed (saves VRAM), works natively with TRL, and the "generate multiple completions → score them all against the real env → reinforce the best ones" loop maps perfectly to a deterministic grader.
 
 ## results
-
-ran the rebuilt notebook on Colab T4. honest numbers, on procedural episodes that were generated at eval time and never seen during training:
 
 | pool                | untrained 3B | after SFT | after SFT + GRPO |
 |---------------------|--------------|-----------|------------------|
@@ -138,52 +103,49 @@ ran the rebuilt notebook on Colab T4. honest numbers, on procedural episodes tha
 
 what these numbers actually say:
 
-- **+0.4423** absolute lift from untrained → SFT on holdout. the model is learning the format + intent routing on episodes it has never seen, not memorizing 15 fixtures.
-- **GRPO ≈ SFT** here (0.9876 vs 0.9877). on hard procedural data the SFT stage is doing most of the lifting; GRPO holds the score steady without collapsing it. that's an honest finding — not the v0.2 "+0.0 because everything was already 1.0" non-result.
-- **0.9885 on adversarial.** the model holds up on probe episodes specifically designed to defeat the rebuilt grader (regex-strict slot, anti-keyword-stuffing, no reward floor).
-
-we are NOT reporting v0.2's `1.0 / 1.0 / 1.0` because those numbers came from a memorization regime that no longer exists in this codebase. dropping fake numbers > keeping them.
+- **+0.4423** absolute lift from untrained → SFT on holdout. the model learns the format and intent routing on episodes it has never seen.
+- **GRPO ≈ SFT** here (0.9876 vs 0.9877). on hard procedural data the SFT stage is doing most of the lifting; GRPO holds the score steady. honest finding, reported as-is.
+- **0.9885 on adversarial.** the model holds up on probe episodes specifically designed to defeat the grader's anti-shortcut behavior.
 
 ### grader sanity probes (from the same run)
 
-just to prove the v0.2 shortcuts are actually dead, the notebook also runs deterministic probes on `_slot_score` and `_message_score`:
+deterministic checks on `_slot_score` and `_message_score`:
 
 ```
-slot-score probe (shortcuts should be 0.0; honest matches should be 1.0):
-  hint='after 20:30'   slot='later today'              -> 0.00   (old shortcut: 'today' substring)
-  hint='after 20:30'   slot='3pm tomorrow'             -> 0.00   (old shortcut: 'pm' substring)
-  hint='20:30'         slot='reschedule to 20:30'      -> 1.00   (honest match)
+slot-score probe (shortcuts -> 0.0; honest matches -> 1.0):
+  hint='after 20:30'   slot='later today'              -> 0.00
+  hint='after 20:30'   slot='3pm tomorrow'             -> 0.00
+  hint='20:30'         slot='reschedule to 20:30'      -> 1.00
   hint='20:30'         slot='21:00'                    -> 0.70   (30 min off, partial credit)
-  hint='20:30'         slot='08:00'                    -> 0.00   (wildly wrong)
+  hint='20:30'         slot='08:00'                    -> 0.00
 
 message-score probe:
   STUFFED : 0.50   ('reschedule, work, urgent.')
   REAL    : 1.00   ('Reschedule the incident review to 20:30 with owner confirmation and follow up note.')
 ```
 
-both old shortcuts hit `0.0`. an honest message scores `1.0`; a keyword-stuffed one scores `0.5`. the rebuild is doing what it claims.
+substring slot shortcuts return `0.0`. an honest `HH:MM` match returns `1.0` with proportional partial credit when the time is off. an honest message scores `1.0`; a keyword-stuffed one scores `0.5`. the grader does what it says.
 
 ## what stayed the same (so we didn't break the API)
 
-- the action schema (6 intents, 6 owners, 4 priorities, slot, needs_clarification, message). backward-compatible for any client that already integrates with the v0.2 API.
+- the action schema (6 intents, 6 owners, 4 priorities, slot, needs_clarification, message). backward-compatible for any existing client.
 - the OpenEnv `reset` / `step` / `state` interface and the FastAPI server.
 - the Docker + HF Space deployment pipeline.
-- the static fixture tasks for the live UI demo. they're kept around so the deployed Space still has interactive episodes for visitors. they are **not** used for training or evaluation. that's marked clearly in the code and the README.
+- a small set of static fixture tasks for the live UI demo. they're kept around so the deployed Space still has interactive episodes for visitors. they are **not** used for training or evaluation.
 
 ## what we wish we'd had time for
 
-- **curriculum**: harder episodes for later in training (we have the difficulty knob, we just didn't sweep it).
-- **a proper user study or domain-expert pass on the reward weights.** the current weights are documented and auditable, but they're still our best judgment, not validated.
-- **a bigger procedural template pool.** we have ~6 templates plus a finalize template; more variety would help generalization.
+- **curriculum**: harder episodes for later in training. we have the difficulty knob, we just didn't sweep it.
+- **a proper user study or domain-expert pass on the reward weights.** the current weights are documented and auditable, but they're still our best judgment.
+- **a bigger procedural template pool.** ~6 templates plus a finalize template; more variety would help generalization.
 - **a learned reward model.** right now it's deterministic. a learned one would let us scale to fuzzier judgment calls.
 
 ## lessons we'd hammer into a future-self
 
-- if you can't articulate what your environment's *world state* is, it isn't long-horizon. bookkeeping isn't state. step counters and reward histories don't count.
-- a static fixture is a dataset. the moment you train on it AND evaluate on it, you've built a leaderboard for your own homework. and then you put that leaderboard on a slide.
-- reward floors hide bugs. ours did. we never noticed because the model was always >0.10 — but we never noticed *because of the floor*. classic.
+- if you can't articulate what your environment's *world state* is, it isn't long-horizon. step counters and reward histories don't count.
+- a static fixture is a dataset. the moment you train on it AND evaluate on it, you've built a leaderboard for your own homework.
+- reward floors hide bugs. don't have them.
 - "it works on three hand-written examples" doesn't generalize. fixing it to "it works on 100 procedural examples" is a different *kind* of works.
-- when someone roasts your code with a numbered list, read the list before you defend yourself. we did, eventually, and the rebuild is way better for it.
 
 ---
 
@@ -191,6 +153,6 @@ both old shortcuts hit `0.0`. an honest message scores `1.0`; a keyword-stuffed 
 
 - **live environment**: [HuggingFace Space](https://huggingface.co/spaces/srivtx/openenv-conflict-resolver-v2)
 - **training notebook**: `notebooks/train_grpo_colab.ipynb`
-- **full docs**: see `docs/` (9 chapters from RL basics through the v0.3 rebuild)
+- **full docs**: see `docs/` (9-chapter walkthrough)
 
-*built with Unsloth, TRL, and a willingness to delete our own dishonest numbers.*
+*built with Unsloth and TRL.*

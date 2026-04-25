@@ -224,38 +224,31 @@ def test_repetitive_intent_penalty_kicks_in_at_three() -> None:
 
 
 def test_substring_slot_shortcut_no_longer_works() -> None:
-    """Adversarial probe: the old 'pm'/'today' magic-word shortcut is dead.
+    """The slot scorer requires a parseable HH:MM and rewards proximity to the hint.
 
-    The previous grader gave 0.6 for any of {am, pm, today, tomorrow, after, before, :}
-    in the slot. The new regex grader requires a parseable HH:MM time and a small
-    distance to the expected hint.
+    Natural-language slot strings (e.g. 'later today', '3pm tomorrow') cannot be
+    parsed as 24h HH:MM and must score 0.0 even when require_slot is True.
     """
 
     from src.assistant_conflict_env.graders import _slot_score
 
-    # Old shortcut: substring-only credit
     assert _slot_score("after 20:30", "later today", require_slot=True) == 0.0
     assert _slot_score("after 20:30", "3pm tomorrow", require_slot=True) == 0.0
-    # Honest match still works
     assert _slot_score("after 20:30", "reschedule to 20:30", require_slot=True) == 1.0
-    # Close enough: 30 min off
     assert _slot_score("20:30", "21:00", require_slot=True) == 0.7
-    # Wildly off
     assert _slot_score("20:30", "08:00", require_slot=True) == 0.0
 
 
 def test_keyword_stuffing_no_longer_dominates_message_score() -> None:
-    """Adversarial probe: copying required_keywords into a stub message no longer earns full credit."""
+    """A keyword-stuffed stub must score lower than an on-topic real message."""
 
     from src.assistant_conflict_env.graders import _message_score
     from src.assistant_conflict_env.models import ActionIntent
 
-    # Old stuffing: just the keyword list as a comma string would have hit 1.0
     stuffed = "reschedule, work, urgent."
     rescheduled_real = "Reschedule the incident review to 20:30 with owner confirmation."
 
     stuffed_score = _message_score(ActionIntent.RESCHEDULE_EVENT, stuffed)
     real_score = _message_score(ActionIntent.RESCHEDULE_EVENT, rescheduled_real)
     assert real_score > stuffed_score, (stuffed_score, real_score)
-    # An on-topic real message should land near 1.0
     assert real_score >= 0.95, real_score

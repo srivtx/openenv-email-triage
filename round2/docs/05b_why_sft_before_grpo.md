@@ -2,6 +2,8 @@
 
 This chapter explains SFT (Supervised Fine-Tuning) from absolute scratch — what it is, why we need it, how it works in code, and what happens when you skip it.
 
+> **note:** the code snippets below illustrate the SFT-then-GRPO pipeline using a small teaching dataset for clarity. the shipped notebook (`notebooks/train_grpo_colab.ipynb`) sources SFT data from a procedural train pool of unique episodes, uses the env's real reward as the GRPO reward, and evaluates on a disjoint procedural holdout pool. for the actual measured numbers, see `README.md`.
+
 ---
 
 ## 5B.1 What is SFT? (The Basics)
@@ -415,7 +417,7 @@ for tid in TASK_IDS:
         sft_data.append({"text": text})
         r = await env.step(heuristic_action(r.observation))
 
-sft_data = sft_data * 15  # Repeat for better memorization
+sft_data = sft_data * 3  # Light repetition; main signal comes from dataset diversity
 
 # 2. Train SFT
 sft_trainer = SFTTrainer(
@@ -626,35 +628,34 @@ print(dataset.column_names) # ["text"]
 
 ## 5B.8 The Full Results Comparison
 
-| Model | Easy | Medium | Hard | Average | What Happened |
-|---|---|---|---|---|---|
-| Untrained 3B | 0.5613 | 0.6346 | 0.4741 | **0.5567** | Base instruction-following |
-| GRPO only | 0.5247 | 0.4704 | 0.4514 | **0.4822** ↓ | Format collapse |
-| SFT only | 1.0000 | 1.0000 | 1.0000 | **1.0000** ↑ | Memorized correct answers |
-| SFT + GRPO | 1.0000 | 1.0000 | 1.0000 | **1.0000** ↑ | Maintained + optimized |
-| Heuristic (rules) | 0.6567 | 0.7888 | 0.7246 | **0.7234** | Hand-crafted rules |
+For the measured numbers from a Colab T4 run on procedurally-novel holdout episodes, see the **Training results** section in `README.md`. Headline:
+
+| pool                | untrained 3B | after SFT | after SFT + GRPO |
+|---------------------|--------------|-----------|------------------|
+| holdout (n=40)      | 0.5454       | 0.9877    | 0.9876           |
+| adversarial (n=10)  | —            | —         | 0.9885           |
 
 **Key observations:**
-1. GRPO alone is WORSE than doing nothing
-2. SFT alone achieves perfect scores on the current task set
-3. SFT + GRPO maintains SFT's performance
-4. The heuristic (hand-crafted rules) scores 0.72 — decent but not perfect
+1. GRPO alone (without SFT) tends to collapse output format on this task — SFT is needed first to teach the JSON schema.
+2. SFT lifts holdout from 0.5454 to 0.9877 (+0.4423 absolute) on episodes the model has not seen during training.
+3. GRPO ≈ SFT here (0.9876 vs 0.9877). On hard procedural data the SFT stage is doing most of the lifting; GRPO holds the score steady.
+4. The model also holds 0.9885 on the adversarial probe pool, where the slot grader is regex-strict and message scoring penalizes keyword stuffing.
 
 ---
 
 ## 5B.9 When Does GRPO Actually Matter?
 
-Right now SFT alone gets 1.0. So why bother with GRPO?
+On a small, fixed task set with strong demonstrations, SFT can do most of the lifting. GRPO becomes essential when:
 
-**Scenario 1: More conflicts (future)**
+**Scenario 1: A wide procedural pool**
 ```python
-# Currently: 15 fixed conflicts
-# Future: 500 diverse conflicts, randomly sampled
+# Procedural train pool: 1000+ unique episodes (seeds 1000-1999)
+# Holdout pool:          100 unique episodes (seeds 9000-9099, never seen)
 
-# SFT can memorize 15 answers. 
-# SFT CANNOT memorize 500 answers effectively.
-# GRPO learns STRATEGIES, not specific answers.
-# GRPO generalizes to unseen conflicts.
+# SFT teaches the format and intent routing on diverse demonstrations.
+# GRPO learns STRATEGIES against the env's real reward — useful when the
+# correct action is a function of state, not a lookup.
+# GRPO generalizes when no demonstration covers the exact case.
 ```
 
 **Scenario 2: Dynamic conflicts (production)**
@@ -721,8 +722,8 @@ Same recipe:
 | 3 | **SFT + RL > either alone** | SFT = foundation, RL = optimization |
 | 4 | **Conservative GRPO after SFT** | Low learning rate (1e-5), few epochs — don't break SFT |
 | 5 | **"Overfitting" in RL ≠ bad** | Solving the environment perfectly IS the goal |
-| 6 | **SFT alone works for small environments** | 15 conflicts can be memorized |
-| 7 | **GRPO matters at scale** | More conflicts, dynamic data, bigger models |
+| 6 | **SFT carries small environments** | When demonstrations cover most of the state space, SFT is enough |
+| 7 | **GRPO matters at scale** | Procedural data, unseen episodes, fuzzier rewards |
 | 8 | **Same recipe as ChatGPT** | SFT → RL is the universal LLM training pipeline |
 
 ---

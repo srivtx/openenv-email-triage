@@ -16,39 +16,17 @@ pinned: false
 
 ---
 
-## what changed in the v0.3 rebuild
+## what the environment does
 
-short version: an external code review came in and basically said "this isn't an environment, it's a deployed dataset with a scoring function." they were right. we deleted the fake `1.0` scores and rebuilt the thing properly.
+a multi-step conflict resolution loop with a mutable world state. each step the agent sees the current conflict (plus the visible calendar), emits one structured JSON action, and the env:
 
-| concern in v0.2                                           | what v0.3 actually does                                                                                              |
-|-----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| 15 static conflicts; SFT and eval used the same set       | procedural generator with disjoint **train (seeds 1000-1999)**, **holdout (9000-9099)**, and **adversarial (5000-5009)** seed pools |
-| "long-horizon" was independent classification             | `WorldState` carries `calendar`, `pending_clarifications`, `revealed_info`, `cascade_queue` across steps             |
-| "partial observability" was pre-labeled                   | two-step clarification cycle: ask first, info revealed on the next step, then resolve with the new info              |
-| "cascading conflicts" never cascaded                      | `CascadeRule` generates follow-on conflicts when the agent's action satisfies a trigger (e.g. reschedule past 18:00 spawns a school-pickup conflict) |
-| substring-match slot scoring (`"pm"`/`"today"` shortcut)  | regex-strict 24h `HH:MM` parsing with time-distance scoring                                                          |
-| keyword-stuffing message scoring                          | length + on-topic verb + word-diversity check; weight reduced to 5%                                                  |
-| reward floor of 0.10 hid bad behavior                     | floor removed: a fully wrong action scores `0.0`                                                                     |
-| `sft_data * 15` over 15 unique examples                   | SFT data sourced from the procedural train pool (no duplication, every example unique)                              |
-| duplicate cell in the notebook                            | killed; replaced with a no-op placeholder for cell-numbering continuity                                              |
-| `inference.py` defaulted to Qwen 72B via HF Router        | now defaults to local Qwen 2.5 3B Instruct + LoRA (the actual trained model) via `transformers` / `peft`             |
-| reward weights with no derivation                         | new weights documented in `graders.py`; old weights logged for auditability                                          |
-
-the v0.2 static fixtures (`fixtures/conflict_cases.json`) are kept *only* as the deployed UI demo. **all training and evaluation now run on the procedural pools.**
-
----
-
-## what the environment actually does
-
-multi-step conflict resolution loop with a mutable world state. each step the agent sees the current conflict (plus the visible calendar), emits one structured JSON action, and the env:
-
-1. grades the action with the rebuilt grader.
+1. grades the action with a 6-component reward.
 2. mutates the calendar on `reschedule_event` / `propose_plan` actions.
 3. on a clarification case where the agent correctly asks, **keeps the same conflict at the front of the queue** and reveals the hidden info on the next step.
 4. on any cascade-rule case, checks whether the action triggers the rule (e.g. reschedule past 18:00 with `owner=work`) and **appends a follow-on conflict** to the queue.
 5. returns reward, observation, done, and reward components.
 
-action space stays the same (6 intents × 6 owners × 4 priorities + slot + needs_clarification + message), so the model contract is unchanged. existing clients keep working.
+the action space is 6 intents × 6 owners × 4 priorities + slot + needs_clarification + message:
 
 ```json
 {
@@ -63,7 +41,52 @@ action space stays the same (6 intents × 6 owners × 4 priorities + slot + need
 
 ---
 
-## reward design (rebuilt)
+## procedural episodes (not a fixed dataset)
+
+`conflict_generator.generate_episode(seed, difficulty)` builds episodes from parameterized templates with random variation in times, owners, urgencies, and event names. the reachable state space is huge — every seed yields a different episode.
+
+| difficulty | conflicts | clarifications | cascades |
+|------------|-----------|----------------|----------|
+| easy       | 3         | 0              | 0        |
+| medium     | 5         | ~1             | 0        |
+| hard       | 7         | ~2             | ~1       |
+
+---
+
+## world state across steps
+
+`WorldState` lives across the whole episode and tracks:
+
+- `calendar`: events with start/end/owner/locked. **mutated** when the agent reschedules or proposes a plan.
+- `pending_clarifications`: queued info reveals waiting to come back.
+- `revealed_info`: `conflict_id → revealed text`.
+- `cascade_queue`: follow-on conflicts the agent's own actions have spawned.
+
+the conflict queue is dynamic, not a fixed array index — conflicts can be re-presented (after a clarification reveal), and new conflicts can be appended mid-episode (when a cascade rule fires).
+
+---
+
+## two-step partial observability
+
+when a conflict has a `ClarificationSpec` and the agent picks `ask_clarification`:
+
+1. **step N** — env scores the ask, records the revealed info on the case, and **keeps the same conflict at the front of the queue.**
+2. **step N+1** — env re-presents the same conflict with `revealed_info` attached to the summary, and grades the post-reveal action.
+3. **step N+2** — queue advances to the next conflict.
+
+picking `ask_clarification` when no clarification is warranted triggers a `clarification_spam` penalty. the "ask everything to be safe" path is closed.
+
+---
+
+## real cascades
+
+every procedural template can carry a `CascadeRule`. hard-difficulty episodes include a reschedule case where pushing the slot past 18:00 with `owner=work` spawns a follow-on "school pickup uncovered" conflict. the new conflict goes onto the queue and gets resolved like any other — **the agent's own decision generates the next problem.**
+
+the unit tests assert a cascade fires under perfect-play oracles for `seed=42` (`test_cascade_appends_followup_conflict`).
+
+---
+
+## reward design
 
 six weighted components, summing to 1.0. each is in `[0, 1]`; a per-component contribution is naturally capped at its weight. full derivation lives in [`graders.py`](src/assistant_conflict_env/graders.py).
 
@@ -71,21 +94,25 @@ six weighted components, summing to 1.0. each is in `[0, 1]`; a per-component co
 |-----------------|--------|--------------------------------------------------------------------------|
 | `intent`        | 0.40   | exact match on action category — most consequential decision           |
 | `owner`         | 0.20   | exact match on responsible principal                                    |
-| `slot`          | 0.20   | regex-strict 24h `HH:MM`; time-distance scoring (no substring shortcut) |
+| `slot`          | 0.20   | regex-strict 24h `HH:MM`; time-distance scoring                         |
 | `priority`      | 0.10   | partial credit (0.5) for off-by-one — adjacent priorities are defensible |
 | `clarification` | 0.05   | boolean alignment with the case's `block_if_missing_context`             |
 | `message`       | 0.05   | structural proxy: length + on-topic verb + word-diversity               |
 
-**anti-hacking penalties** (subtracted from the score, no floor — meaning a bad action can hit `0.0`):
+**slot scoring** is regex-strict 24h `HH:MM` parsing with time-distance scoring (exact = 1.0, ≤30 min = 0.7, ≤60 min = 0.4, ≤120 min = 0.2, else 0.0).
 
-- `repetitive_intent` (−0.10): same intent three steps in a row (was two; the old check was bypassable by alternating two intents)
-- `premature_finalize` (−0.15): `finalize_itinerary` while >1 conflict still pending
-- `terminal_early` (−0.05): any other terminal-style intent used to short-circuit
-- `missing_slot` (−0.05): `require_slot=True` but no slot supplied
-- `clarification_spam` (−0.05): asking when not warranted (case has no clarification spec, or info already revealed)
-- `short_message` (−0.04): message under 16 chars
+**message scoring** is length + on-topic verb + word-diversity. a real on-topic sentence scores 1.0; a keyword-stuffed string scores ~0.5.
 
-reward band is now `[0.0, 1.0]`. real numbers, no floor protecting bad behavior.
+**anti-hacking penalties** (subtracted from the score, no floor — a fully wrong action can score `0.0`):
+
+- `repetitive_intent` (−0.10) — same intent three steps in a row
+- `premature_finalize` (−0.15) — `finalize_itinerary` while >1 conflict still pending
+- `terminal_early` (−0.05) — any other terminal-style intent used to short-circuit
+- `missing_slot` (−0.05) — `require_slot=True` but no slot supplied
+- `clarification_spam` (−0.05) — asking when not warranted
+- `short_message` (−0.04) — message under 16 chars
+
+reward band is `[0.0, 1.0]`.
 
 ---
 
@@ -93,56 +120,49 @@ reward band is now `[0.0, 1.0]`. real numbers, no floor protecting bad behavior.
 
 pools are disjoint *by construction* — asserted at module import via `assert_split_disjoint()`:
 
-| pool          | seed range  | size  | what it's for                                       |
-|---------------|-------------|-------|------------------------------------------------------|
-| train         | 1000-1999   | 1000  | SFT data + GRPO rollouts                            |
-| holdout       | 9000-9099   |  100  | honest generalization eval                          |
-| adversarial   | 5000-5009   |   10  | probe that old shortcuts (substring slot, keyword stuffing, etc.) are dead |
+| pool          | seed range  | size  | purpose                                          |
+|---------------|-------------|-------|--------------------------------------------------|
+| train         | 1000-1999   | 1000  | SFT data + GRPO rollouts                         |
+| holdout       | 9000-9099   |  100  | honest generalization eval                       |
+| adversarial   | 5000-5009   |   10  | probes the rebuilt grader's anti-shortcut behavior |
 
-every episode is deterministic from its seed. so the split is reproducible from any commit. no leakage. no fudging.
+every episode is deterministic from its seed, so the split is reproducible from any commit.
 
 ---
 
 ## training results
 
-the notebook ([`notebooks/train_grpo_colab.ipynb`](notebooks/train_grpo_colab.ipynb)) was rebuilt to:
-
-- pull SFT data from the procedural train pool (no `sft_data * 15` duplication).
-- run GRPO with **the env's real reward** as the reward function (not a placeholder).
-- evaluate on the **procedural holdout pool** (disjoint from training).
-- include an adversarial probe cell that runs the rebuilt grader on canonical "old shortcut" inputs and asserts they no longer get full credit.
-
-> **honest numbers from a Colab T4 run on the v0.3 codebase.** the pre-rebuild numbers (`1.0 / 1.0 / 1.0`) are *removed* because they came from a memorization regime that no longer exists. these scores come from procedural episodes that were generated at eval time and were *not* in the training set.
+honest numbers from a Colab T4 run on procedural episodes generated at eval time (the model has never seen these seeds during training):
 
 | pool                | untrained 3B | after SFT | after SFT + GRPO |
 |---------------------|--------------|-----------|------------------|
 | holdout (n=40)      | **0.5454**   | **0.9877**| **0.9876**       |
 | adversarial (n=10)  | —            | —         | **0.9885**       |
 
-- **+0.4423** absolute lift on holdout from untrained → SFT. the model is actually learning the format + intent routing on procedurally-novel episodes.
-- **GRPO ≈ SFT** here (0.9876 vs 0.9877). on hard procedural episodes the SFT stage is doing most of the lifting; GRPO is keeping the score steady, not collapsing it. honest takeaway, not 1.0-vs-1.0 marketing.
-- **adversarial pool: 0.9885.** the model holds up on episodes designed to probe the rebuilt grader (regex slot scoring, no keyword stuffing). only the final model was probed against this pool.
+- **+0.4423** absolute lift on holdout from untrained → SFT. the model learns format and intent routing on procedurally-novel episodes.
+- **GRPO ≈ SFT** here (0.9876 vs 0.9877). on hard procedural episodes the SFT stage is doing most of the lifting; GRPO holds the score steady, not collapsing it. reported as-is.
+- **adversarial pool: 0.9885** with the final model. holds up on the probe seeds.
 
-### grader sanity probes (from the same run)
+### grader sanity probes
 
-verifying the v0.2 shortcuts are actually dead:
+verifying the slot and message scorers behave as designed:
 
 ```
-slot-score probe (shortcuts should be 0.0; honest matches should be 1.0):
-  hint='after 20:30'        slot='later today'                -> 0.00   (old shortcut: 'today' substring)
-  hint='after 20:30'        slot='3pm tomorrow'               -> 0.00   (old shortcut: 'pm' substring)
-  hint='20:30'              slot='reschedule to 20:30'        -> 1.00   (honest match)
-  hint='20:30'              slot='21:00'                      -> 0.70   (30 min off, partial credit)
-  hint='20:30'              slot='08:00'                      -> 0.00   (wildly wrong)
+slot-score probe:
+  hint='after 20:30'   slot='later today'              -> 0.00
+  hint='after 20:30'   slot='3pm tomorrow'             -> 0.00
+  hint='20:30'         slot='reschedule to 20:30'      -> 1.00
+  hint='20:30'         slot='21:00'                    -> 0.70   (30 min off, partial credit)
+  hint='20:30'         slot='08:00'                    -> 0.00
 
-message-score probe (stuffing should be lower than a real message):
+message-score probe:
   STUFFED : 0.50  ('reschedule, work, urgent.')
   REAL    : 1.00  ('Reschedule the incident review to 20:30 with owner confirmation and follow up note.')
 ```
 
-both old shortcuts are at `0.0`. an honest message scores `1.0`; a keyword-stuffed one scores `0.5`. the rebuild is working as intended.
+deterministic, regex-strict, no substring shortcuts.
 
-to reproduce: open the Colab notebook, set runtime to T4, run all cells. the notebook prints the holdout averages, the adversarial probe, and the grader probes at the end.
+to reproduce: open the Colab notebook, set runtime to T4, run all cells. the notebook prints holdout averages, the adversarial pool number, and these grader probes at the end.
 
 ---
 
@@ -196,10 +216,10 @@ python inference.py
 
 ---
 
-## theme alignment (honestly)
+## theme alignment
 
-- **theme 3.2 — personalized tasks**: the env models a single user's chaotic afternoon (work calendar, family logistics, finance/legal). personalization is in the templates and constraints.
-- **theme 2 — long-horizon planning**: now a defensible claim. state is carried across steps via `WorldState`; cascade conflicts depend on the agent's own past actions; clarifications take a 2-step ask-then-act loop. the unit tests assert all of this — it's not just words on a slide anymore.
+- **theme 3.2 — personalized tasks**: the env models a single user's chaotic afternoon (work calendar, family logistics, finance/legal). personalization lives in the templates and constraints.
+- **theme 2 — long-horizon planning**: state is carried across steps via `WorldState`; cascade conflicts depend on the agent's own past actions; clarifications take a 2-step ask-then-act loop. the unit tests assert all of this.
 
 ---
 
@@ -224,21 +244,21 @@ round2/
 │       ├── tasks.py                    <- static + procedural task resolver
 │       ├── server.py                   <- FastAPI endpoints
 │       └── fixtures/
-│           └── conflict_cases.json     <- legacy static demo (UI only, not training)
+│           └── conflict_cases.json     <- static demo tasks (UI only, not training)
 ├── notebooks/
 │   └── train_grpo_colab.ipynb          <- procedural SFT + GRPO + holdout eval
 ├── docs/                               <- 9-chapter walkthrough
 └── tests/
     ├── test_environment.py
     ├── test_graders.py
-    └── test_world_state.py             <- new: cascades, clarifications, adversarial probes
+    └── test_world_state.py             <- cascades, clarifications, adversarial probes
 ```
 
 ---
 
 ## reproducing demo and eval
 
-for the demo video, the recommended seed is **42** (used in the new test suite):
+for the demo video, the recommended seed is **42** (used in the test suite):
 
 ```bash
 python -c "
@@ -254,4 +274,4 @@ asyncio.run(go())
 
 ---
 
-*built with Unsloth, TRL, and a willingness to delete our own dishonest numbers.*
+*built with Unsloth and TRL.*

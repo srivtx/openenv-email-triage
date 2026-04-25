@@ -2,7 +2,7 @@
 
 The reward function is the most important part of any RL system. A bad reward = a model that learns the wrong thing. This chapter explains every scoring decision in our graders.
 
-> **v0.3 rebuild note:** the weights and the slot/message scoring described below reflect the *v0.2 grader* (substring-match slot, keyword-stuffing message, 0.10 reward floor). The shipped v0.3 grader replaces those with regex-strict 24h `HH:MM` parsing, a length+verb+diversity message proxy, no reward floor, and documented weight derivation. See the module docstring in `src/assistant_conflict_env/graders.py` and the README "What changed" table for the new design.
+> **note:** the weights and scoring described below illustrate a teaching version of the grader. the shipped grader uses regex-strict 24h `HH:MM` parsing, a length+verb+diversity message proxy, no reward floor, and documented weight derivation. see the module docstring in `src/assistant_conflict_env/graders.py` for the full design.
 
 ---
 

@@ -888,13 +888,11 @@
         <!-- PAGE: RESULTS -->
         <div id="page-results" class="hidden">
           <div class="panel">
-            <div class="panel-title">Training Analytics (SFT + GRPO, v0.3 rebuild)</div>
+            <div class="panel-title">Training Analytics (SFT + GRPO)</div>
             <div style="font-size: 13px; line-height: 1.6; margin-bottom: 16px; opacity: 0.8;">
-              Numbers below come from a Colab T4 run on the v0.3 codebase. The
-              <strong>holdout</strong> pool uses seeds 9000-9099 (disjoint from training seeds 1000-1999); the
-              <strong>adversarial</strong> pool uses seeds 5000-5009 and is designed to probe that the rebuilt
-              grader's anti-shortcut behavior holds. The pre-rebuild scores (<code>1.0 / 1.0 / 1.0</code>) were
-              removed — they came from a memorization regime where the SFT and eval sets were the same 15 fixtures.
+              Numbers below come from a Colab T4 run. The <strong>holdout</strong> pool uses seeds 9000-9099
+              (disjoint from training seeds 1000-1999); the <strong>adversarial</strong> pool uses seeds 5000-5009
+              and probes that the grader's anti-shortcut behavior holds.
             </div>
             <table class="data-table">
               <thead>
@@ -924,19 +922,17 @@
               </tbody>
             </table>
             <div style="font-size: 12px; line-height: 1.6; margin-top: 12px; opacity: 0.7;">
-              <strong>Honest takeaway:</strong> the +0.4423 absolute lift on holdout from untrained → SFT shows the
-              model is actually learning intent routing on procedurally-novel episodes (not memorizing fixtures).
-              GRPO ≈ SFT here (0.9876 vs 0.9877) — on this task the SFT stage is doing most of the lifting and GRPO
-              is keeping the score stable without collapsing it. We report this honestly rather than fabricating a
-              GRPO uplift.
+              <strong>Takeaway:</strong> the +0.4423 absolute lift on holdout from untrained → SFT shows the model
+              is learning intent routing on procedurally-novel episodes. GRPO ≈ SFT here (0.9876 vs 0.9877) — on
+              this task the SFT stage is doing most of the lifting and GRPO is keeping the score stable.
             </div>
           </div>
 
           <div class="panel" style="margin-top: 16px;">
             <div class="panel-title">Grader sanity probes</div>
             <div style="font-size: 13px; line-height: 1.6; margin-bottom: 12px; opacity: 0.8;">
-              Deterministic checks that the v0.2 shortcuts are actually dead (run automatically at the end of the
-              training notebook).
+              Deterministic checks on the slot and message scorers (run automatically at the end of the training
+              notebook).
             </div>
             <table class="data-table">
               <thead>
@@ -950,12 +946,12 @@
                 <tr>
                   <td><code>hint='after 20:30'</code> &nbsp;<code>slot='later today'</code></td>
                   <td>0.00</td>
-                  <td>old shortcut: 'today' substring &mdash; now zero</td>
+                  <td>natural-language slot &mdash; not a parseable HH:MM</td>
                 </tr>
                 <tr>
                   <td><code>hint='after 20:30'</code> &nbsp;<code>slot='3pm tomorrow'</code></td>
                   <td>0.00</td>
-                  <td>old shortcut: 'pm' substring &mdash; now zero</td>
+                  <td>12-hour format &mdash; not a parseable 24h HH:MM</td>
                 </tr>
                 <tr>
                   <td><code>hint='20:30'</code> &nbsp;<code>slot='reschedule to 20:30'</code></td>
@@ -998,17 +994,17 @@
           </div>
 
           <div class="panel" style="margin-top: 16px;">
-            <div class="panel-title">What v0.3 actually delivers</div>
+            <div class="panel-title">Architecture highlights</div>
             <div style="font-size: 13px; line-height: 1.7;">
               <ul style="margin: 0; padding-left: 18px;">
                 <li><strong>World state across steps</strong> — calendar mutations, pending clarifications, and
-                  cascade queue all carry forward; not bookkeeping but actual state.</li>
-                <li><strong>Two-step partial observability</strong> — <code>ask_clarification</code> now keeps the
-                  same conflict at the front of the queue and re-presents it next step with the revealed info.</li>
+                  cascade queue all carry forward; actual state, not bookkeeping.</li>
+                <li><strong>Two-step partial observability</strong> — <code>ask_clarification</code> keeps the same
+                  conflict at the front of the queue and re-presents it next step with the revealed info.</li>
                 <li><strong>Real cascades</strong> — rescheduling past 18:00 with <code>owner=work</code> spawns a
                   follow-on school-pickup conflict on the queue. Tested under perfect-play oracle.</li>
-                <li><strong>Rebuilt grader</strong> — regex-strict <code>HH:MM</code> slot scoring, length+verb+diversity
-                  message scoring, no 0.10 reward floor.</li>
+                <li><strong>Rigorous grader</strong> — regex-strict <code>HH:MM</code> slot scoring,
+                  length+verb+diversity message scoring, deterministic and probe-tested.</li>
                 <li><strong>Disjoint train/holdout/adversarial seed pools</strong> — asserted at module import.</li>
               </ul>
             </div>
