@@ -753,9 +753,65 @@
         <!-- PAGE: DASHBOARD -->
         <div id="page-dashboard">
           <div style="margin-bottom: 24px;">
-            <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Select Task Difficulty</h2>
-            <p style="color: var(--text-secondary); font-size: 13px;">Choose a scenario to launch the resolution
-              pipeline.</p>
+            <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Procedural episodes</h2>
+            <p style="color: var(--text-secondary); font-size: 13px;">Each tile generates a fresh episode from a seed.
+              Hard episodes carry cascade rules and clarification specs &mdash; the agent's own decisions can spawn
+              follow-on conflicts.</p>
+          </div>
+          <div class="task-grid">
+            <div class="task-card" onclick="selectTask('proc_easy_42')">
+              <div class="task-card-icon"><svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg></div>
+              <div class="task-card-content">
+                <div class="task-card-title">Easy &middot; seed 42</div>
+                <div class="task-card-desc">3 conflicts. Procedurally generated. No cascades, no clarifications.</div>
+              </div>
+            </div>
+            <div class="task-card" onclick="selectTask('proc_medium_42')">
+              <div class="task-card-icon"><svg viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg></div>
+              <div class="task-card-content">
+                <div class="task-card-title">Medium &middot; seed 42</div>
+                <div class="task-card-desc">5 conflicts. Includes a clarification spec &mdash; ask, then act on
+                  revealed info.</div>
+              </div>
+            </div>
+            <div class="task-card" onclick="selectTask('proc_hard_42')">
+              <div class="task-card-icon"><svg viewBox="0 0 24 24">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg></div>
+              <div class="task-card-content">
+                <div class="task-card-title">Hard &middot; seed 42</div>
+                <div class="task-card-desc">7 conflicts. Reschedule past 18:00 with <code>owner=work</code> and watch
+                  a follow-on conflict appear on the queue.</div>
+              </div>
+            </div>
+            <div class="task-card" onclick="selectTask('proc_hard_5000')">
+              <div class="task-card-icon"><svg viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg></div>
+              <div class="task-card-content">
+                <div class="task-card-title">Adversarial &middot; seed 5000</div>
+                <div class="task-card-desc">Held-out probe seed. Same shape as hard, used to verify the grader's
+                  anti-shortcut behavior holds.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin: 32px 0 16px 0;">
+            <h2 style="font-size: 16px; font-weight: 500; margin-bottom: 4px;">Static demo tasks</h2>
+            <p style="color: var(--text-secondary); font-size: 12px;">Hand-authored fixtures for quick exploration.
+              Not used for training or evaluation.</p>
           </div>
           <div class="task-grid">
             <div class="task-card" onclick="selectTask('easy_evening_planner')">
@@ -764,8 +820,8 @@
                   <polyline points="12 6 12 12 16 14" />
                 </svg></div>
               <div class="task-card-content">
-                <div class="task-card-title">Easy (3 Conflicts)</div>
-                <div class="task-card-desc">Straightforward evening planner & commute overlaps.</div>
+                <div class="task-card-title">Easy demo</div>
+                <div class="task-card-desc">Evening planner &amp; commute overlaps.</div>
               </div>
             </div>
             <div class="task-card" onclick="selectTask('medium_multi_party_negotiation')">
@@ -776,8 +832,8 @@
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg></div>
               <div class="task-card-content">
-                <div class="task-card-title">Medium (5 Conflicts)</div>
-                <div class="task-card-desc">Multi-party negotiation, missing info, and travel.</div>
+                <div class="task-card-title">Medium demo</div>
+                <div class="task-card-desc">Multi-party negotiation, missing info, travel.</div>
               </div>
             </div>
             <div class="task-card" onclick="selectTask('hard_cascade_replanning')">
@@ -787,8 +843,8 @@
                   <line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg></div>
               <div class="task-card-content">
-                <div class="task-card-title">Hard (7 Conflicts)</div>
-                <div class="task-card-desc">Cascading chaos, strict constraints, and legal blockers.</div>
+                <div class="task-card-title">Hard demo</div>
+                <div class="task-card-desc">Strict constraints &amp; legal blockers.</div>
               </div>
             </div>
           </div>
