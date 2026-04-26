@@ -33,6 +33,12 @@ app.add_middleware(
 _env = PersonalAssistantConflictEnv()
 _static_dir = Path(__file__).parent / "static"
 
+if _static_dir.is_dir():
+    # Serves /static/...  (local + hf.space direct)
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+    # HF Spaces with base_path: /web  resolves assets under /web/static/...
+    app.mount("/web/static", StaticFiles(directory=str(_static_dir)), name="static_web")
+
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/web", response_class=HTMLResponse)

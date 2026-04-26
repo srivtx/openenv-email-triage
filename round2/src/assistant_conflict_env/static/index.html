@@ -54,19 +54,62 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: radial-gradient(circle at 50% 40%, #1a1a1a 0%, var(--bg) 60%);
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       transition: opacity 0.5s ease, transform 0.5s ease;
+      overflow: hidden;
+    }
+
+    .landing-video-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .landing-video {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+    }
+
+    .landing-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(26, 26, 26, 0.86) 0%, rgba(10, 10, 10, 0.94) 60%),
+        linear-gradient(180deg, rgba(10, 10, 10, 0.72) 0%, rgba(10, 10, 10, 0.9) 100%);
+      pointer-events: none;
     }
 
     .landing-content {
+      position: relative;
+      z-index: 2;
       text-align: center;
       max-width: 600px;
       padding: 40px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .landing-video-wrap {
+        display: none;
+      }
+
+      .landing {
+        background: radial-gradient(circle at 50% 40%, #1a1a1a 0%, var(--bg) 60%);
+      }
     }
 
     .landing-title {
@@ -813,6 +856,12 @@
 
   <!-- LANDING PAGE -->
   <div id="landing-page" class="landing">
+    <div class="landing-video-wrap" aria-hidden="true">
+      <video id="landing-hero-video" class="landing-video" autoplay muted loop playsinline preload="metadata">
+        <source id="landing-hero-source" src="/static/video2.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div class="landing-scrim" aria-hidden="true"></div>
     <div class="landing-content">
       <div class="stack-container">
         <div class="stack">
@@ -830,6 +879,16 @@
         onclick="enterApp()">Launch Environment</button>
     </div>
   </div>
+  <script>
+    (function () {
+      var v = document.getElementById('landing-hero-video');
+      var s = document.getElementById('landing-hero-source');
+      if (v && s && location.pathname.indexOf('/web') === 0) {
+        s.src = '/web/static/video2.mp4';
+        v.load();
+      }
+    })();
+  </script>
 
   <div id="app" class="app-container" style="display: none;">
     <div class="sidebar">
@@ -1342,6 +1401,8 @@
     function enterApp() {
       const landing = document.getElementById('landing-page');
       const app = document.getElementById('app');
+      const hero = document.getElementById('landing-hero-video');
+      if (hero) hero.pause();
       landing.style.opacity = '0';
       landing.style.transform = 'scale(0.95)';
       setTimeout(() => {
