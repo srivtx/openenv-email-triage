@@ -25,10 +25,22 @@ This brief is built so each shot literally renders a specific claim.
 | Audio | Ambient pad (sub-bass + glassy synth, no vocals). VO mixed -3dB above bed. |
 | Voice | Neutral, technical, slightly low-register. Pace ~120 wpm. |
 
-**One-line thesis the video must communicate:**
-*"Most LLM-agent RL environments are static answer keys. Ours has mutable
-state, real cascades, and disjoint seed pools — and the trained 3B model
-generalises to seeds it has never seen."*
+**The 3-act story the video must tell:**
+
+1. **Problem (0:00–0:30)** — Real life is many overlapping commitments.
+   AI assistants today give confident answers and silently break adjacent
+   commitments. They do this because the *environments we train them in*
+   are static answer keys — no state, no consequences, no way to learn
+   long-horizon planning.
+2. **Uniqueness (0:30–1:38)** — We built an environment that has state.
+   Procedural episodes from disjoint seed pools, a mutable calendar that
+   carries across steps, real two-step partial observability, follow-on
+   conflicts that the agent's own decisions trigger, and a grader that
+   refuses keyword stuffing.
+3. **Proof (1:38–2:00)** — A 3B model trained in this environment goes
+   from 0.5454 to 0.9876 on forty held-out episodes it never saw, and
+   0.9885 on ten reserved adversarial seeds. OpenEnv-compatible. Code
+   public.
 
 ---
 
@@ -36,22 +48,22 @@ generalises to seeds it has never seen."*
 
 This is the proof that the cinematic version actually says what we say.
 
-| # | Time | Dur | Shot | Claim it renders |
-| --- | --- | --- | --- | --- |
-| 1 | 0:00–0:06 | 6s | Frozen calendar in glass case | "Static fixtures are answer keys" (negative example) |
-| 2 | 0:06–0:11 | 5s | Glass shatters, calendar dissolves | Transition to procedural |
-| 3 | 0:11–0:22 | 11s | Particles re-form into different calendars | **Procedural episode generation from seeds** |
-| 4 | 0:22–0:34 | 12s | 3D calendar grid orbits, events glow | **Mutable WorldState across steps** |
-| 5 | 0:34–0:48 | 14s | Frosted-glass event clears to reveal text | **Two-step partial observability** |
-| 6 | 0:48–1:06 | 18s | Domino reschedule → spawns red conflict tile | **Cascading follow-on conflicts (long-horizon)** |
-| 7 | 1:06–1:18 | 12s | "after 8pm" rejected by a regex barrier | **Regex-strict HH:MM slot grader** |
-| 8 | 1:18–1:26 | 8s | Stuffed message stamped, real sentence ticked | **Length+verb+diversity message grader** |
-| 9 | 1:26–1:40 | 14s | Reward curve climbing 0.55 → 0.99 | **Holdout: 0.5454 → 0.9877 → 0.9876** |
-| 10 | 1:40–1:48 | 8s | Red probe seeds light up adversarial bar | **Adversarial n=10 = 0.9885** |
-| 11 | 1:48–1:54 | 6s | OpenEnv API nodes pulse | **OpenEnv-compatible: /reset /step /state** |
-| 12 | 1:54–2:00 | 6s | Isometric stack rotates, URLs fade in | CTA |
+| # | Act | Time | Dur | Shot | Claim it renders |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Problem | 0:00–0:10 | 10s | Real-life calendar chaos: paper calendar, sticky notes, hourglass | **Real life is many overlapping commitments** |
+| 2 | Problem | 0:10–0:20 | 10s | AI chat bubble gives confident reply; two adjacent commitments crack | **Today's assistants don't track world state** |
+| 3 | Problem | 0:20–0:30 | 10s | Frozen paper calendar entombed in glass | **Most RL envs are static answer keys** |
+| 4 | Unique | 0:30–0:40 | 10s | Glass shatters → particles re-form into different calendars per seed | **Procedural episode generation, disjoint pools** |
+| 5 | Unique | 0:40–0:52 | 12s | World-state orbit: calendar grid + clarifications + cascade queue | **Mutable WorldState across steps** |
+| 6 | Unique | 0:52–1:06 | 14s | Frosted-glass event clears on `ask_clarification` | **Two-step partial observability** |
+| 7 | Unique | 1:06–1:24 | 18s | Domino: reschedule past 18:00 spawns a red follow-on conflict | **Cascading follow-on conflicts (HERO)** |
+| 8 | Unique | 1:24–1:32 | 8s | "after 8pm" bounces off regex wall; "20:30" passes through | **Regex-strict slot grader** |
+| 9 | Unique | 1:32–1:38 | 6s | Stuffed message stamped 0.50; real sentence stamped 1.00 | **Anti-keyword-stuffing message grader** |
+| 10 | Proof | 1:38–1:50 | 12s | Reward curve climbs 0.5454 → 0.9877 → 0.9876 with HOLDOUT tag | **Holdout: 0.5454 → 0.9877 → 0.9876** |
+| 11 | Proof | 1:50–1:55 | 5s | Ten red probe dots line up under a green 0.9885 bar | **Adversarial n=10 = 0.9885** |
+| 12 | Proof | 1:55–2:00 | 5s | Isometric stack rotates, URLs fade in | OpenEnv + CTA |
 
-Total = 120s = **2:00 exact**.
+Total = 10+10+10+10+12+14+18+8+6+12+5+5 = **120s = 2:00 exact.**
 
 Every claim above is in the README / blog / Results page. No new claims, no
 inflation, no "1.0".
@@ -63,66 +75,107 @@ inflation, no "1.0".
 For each shot: visual prompt (paste into Sora/Veo/Runway), the VO line that
 plays *over* it, and a continuity note for the editor.
 
-### SHOT 1 — Frozen calendar (0:00–0:06, 6s)
+### SHOT 1 — Real life is overlapping (0:00–0:10, 10s) · ACT 1: PROBLEM
 
 **Visual prompt:**
 
-> Cinematic macro shot, 24fps, slow horizontal dolly. A vintage paper desk
-> calendar entombed inside a thick rectangular block of glass, lit from
-> above by a single hard top-down studio light. Faint dust motes in the
-> air. Pure black backdrop, no other elements. The glass has subtle
-> internal reflections. The calendar pages are slightly yellowed and
-> static. No text legible, no logos. Anamorphic lens flare across the
-> top. Color grade: dark monochrome with the faintest cyan rim. 4K,
-> shallow depth of field, photo-real.
+> Cinematic overhead macro shot, 24fps, slow vertical descend. A
+> physical paper desk calendar opened to a weekday spread. Several
+> handwritten sticky notes in different colours are scattered across
+> the page — one reads "BOARD REVIEW 16:15", another "SCHOOL PICKUP
+> 18:00", a third "VISA DEADLINE — TONIGHT". A small brass hourglass
+> sits at the edge of the page, sand running. A coffee ring stains
+> one corner. The lighting is warm tungsten from a single overhead
+> lamp; the rest of the frame is pure black. Hard rim light on the
+> hourglass. Faint paper grain. Mid-way through the shot a hand
+> enters frame holding a phone — only the corner of the phone is
+> visible — and a fourth note flutters down onto the page reading
+> "URGENT — RESCHEDULE". The new note partially overlaps the school
+> pickup note. Photo-real, anamorphic, shallow depth of field.
 
-**VO (0:00–0:06):**
+**VO (0:00–0:10):**
 
-> Most RL environments for language agents are static answer keys.
+> Board review at four-fifteen. School pickup at six.
+> A request lands that breaks both.
 
-**Continuity:** end on the glass slightly trembling — telegraphs Shot 2.
+**Continuity:** the new "URGENT — RESCHEDULE" note pulses orange — bridges into Shot 2.
 
 ---
 
-### SHOT 2 — Shatter (0:06–0:11, 5s)
+### SHOT 2 — The assistant breaks things (0:10–0:20, 10s) · ACT 1: PROBLEM
 
 **Visual prompt:**
 
-> Cinematic slow-motion shatter. The glass block from the previous shot
-> explodes outward in razor-thin shards drifting in zero-G. The paper
-> calendar inside disintegrates into a swarm of pale particles that begin
-> drifting upward. Pure black backdrop, hard rim lighting, ultra-slow
-> motion at 240fps remapped to 30fps playback. Particle density medium.
-> No camera movement. Subtle low-end rumble in audio. Photo-real, no text.
+> Cinematic medium close-up. A single floating chat bubble in clean
+> white sans-serif typography against pure black, slightly elevated
+> on a soft drop shadow. The bubble reads:
+>
+>   "Sure — I've moved the board review to 6:30 PM."
+>
+> A small avatar dot pulses cyan beside it. After 2 seconds, faint
+> ghost outlines of two events appear behind the bubble: a school-
+> pickup tile glowing amber and a family-dinner tile glowing cyan.
+> Then thin hairline cracks propagate across each ghost tile and
+> they slowly dim to 40% opacity, fading. The chat bubble itself
+> stays perfectly clean and confident, oblivious. No additional UI.
+> Photo-real, restrained motion, filmic vignette.
 
-**VO (0:06–0:11):**
+**VO (0:10–0:20):**
 
-> We built one with state.
+> The assistant gives you a confident answer.
+> It silently breaks two other commitments.
 
-**Continuity:** particles persist into Shot 3.
+**Continuity:** as bubble fades, particles drift upward — bridges into Shot 3.
 
 ---
 
-### SHOT 3 — Procedural assembly (0:11–0:22, 11s)
+### SHOT 3 — Frozen answer key (0:20–0:30, 10s) · ACT 1: PROBLEM
 
 **Visual prompt:**
 
-> Cinematic time-lapse on a black void. Pale particles from the previous
-> shot swirl together and solidify into a translucent floating wireframe
-> calendar grid, then dissolve again, then re-form into a different
-> calendar grid with different events, then again. Three full assemble-
-> and-dissolve cycles. Each calendar is unique — events at different
-> hours, different counts. A small monospace counter floats at the lower
-> third reading SEED 1042, then SEED 9001, then SEED 5000, switching with
-> each cycle. Camera slowly orbits 30 degrees. Soft cyan glow on the
-> grid lines. No human elements. Photo-real, technical aesthetic.
+> Cinematic macro, 24fps, slow horizontal dolly right. A vintage
+> paper desk calendar entombed inside a thick rectangular block of
+> glass, lit from above by a single hard top-down studio light.
+> Faint dust motes in the air. Pure black backdrop. The glass has
+> subtle internal reflections. The calendar pages are yellowed and
+> completely static. No text legible. Anamorphic lens flare across
+> the top. Around the glass, faintly visible in the dark, several
+> identical glass blocks recede into the distance — implying that
+> *every* training environment looks like this. Color grade: dark
+> monochrome with faint cyan rim. 4K, shallow depth of field. End
+> with the foreground glass trembling almost imperceptibly.
 
-**VO (0:11–0:22):**
+**VO (0:20–0:30):**
 
-> Every episode is generated from a seed.
-> Disjoint pools — train, holdout, adversarial.
+> Why? The environments we train them in are static answer keys.
+> No state. No consequences.
 
-**On-screen text overlay (lower third, monospace):**
+**Continuity:** the trembling glass tells the audience something is about to break — bridges into Shot 4.
+
+---
+
+### SHOT 4 — Procedural assembly (0:30–0:40, 10s) · ACT 2: UNIQUENESS
+
+**Visual prompt:**
+
+> Cinematic slow-motion. The foreground glass block from Shot 3
+> shatters outward in razor-thin shards drifting in zero-G; the
+> paper calendar inside disintegrates into a swarm of pale particles.
+> The particles immediately swirl together and solidify into a
+> translucent wireframe calendar grid with cyan glow lines, hold for
+> ~1.5s, dissolve again, re-form into a *different* calendar (events
+> at different hours, different counts), hold ~1.5s, dissolve, re-
+> form one more time. A small monospace counter at lower-third reads
+> SEED 1042 → SEED 9001 → SEED 5000, switching with each cycle.
+> Camera slow orbits 20 degrees. Pure black background, photo-real,
+> technical aesthetic. End on a single calendar holding still.
+
+**VO (0:30–0:40):**
+
+> So we built one with state.
+> Every episode generated from a seed. Train, holdout, adversarial — disjoint.
+
+**On-screen text overlay (lower third, monospace, 18pt, 60% opacity):**
 
 ```
 seeds 1000–1999 · train
@@ -130,209 +183,195 @@ seeds 9000–9099 · holdout
 seeds 5000–5009 · adversarial
 ```
 
-**Continuity:** end on a single calendar holding still — the one we'll
-explore in Shot 4.
+**Continuity:** the held still calendar carries directly into the orbit of Shot 5.
 
 ---
 
-### SHOT 4 — World state orbit (0:22–0:34, 12s)
+### SHOT 5 — World state orbit (0:40–0:52, 12s) · ACT 2: UNIQUENESS
 
 **Visual prompt:**
 
-> Cinematic orbital camera, 24fps. A floating 3D calendar grid in deep
-> black space. Three event tiles glow softly: "BOARD REVIEW 16:15-17:45"
-> in cyan, "SCHOOL PICKUP 18:00-18:30" in amber, "FAMILY DINNER
-> 20:00-21:30" in cyan. Around the grid float two smaller translucent
-> panels labelled "PENDING CLARIFICATIONS" and "CASCADE QUEUE", currently
-> empty. Camera orbits 90 degrees around the grid. Soft particles drift.
-> Monochrome with neon accents only on the labelled tiles. No people.
-> Photo-real 3D render aesthetic.
+> Cinematic orbital camera, 24fps. A floating 3D calendar grid in
+> deep black space. Three event tiles glow softly: "BOARD REVIEW
+> 16:15-17:45" cyan, "SCHOOL PICKUP 18:00-18:30" amber, "FAMILY
+> DINNER 20:00-21:30" cyan. Around the grid float two smaller
+> translucent panels labelled "PENDING CLARIFICATIONS" and "CASCADE
+> QUEUE", currently empty. Camera orbits 90 degrees around the grid.
+> Soft particles drift. Monochrome with neon accents only on the
+> labelled tiles. No people. Photo-real 3D render aesthetic.
 
-**VO (0:22–0:34):**
+**VO (0:40–0:52):**
 
-> A mutable calendar, pending clarifications, a cascade queue —
-> all carrying across steps.
+> A mutable calendar. Pending clarifications. A cascade queue.
+> All of it carries across steps.
 
-**Continuity:** orbit ends with the calendar facing camera; school pickup
-tile pulses subtly as foreshadowing for Shot 6.
+**Continuity:** orbit ends with the calendar facing camera; the school-pickup tile pulses amber as foreshadowing for Shot 7.
 
 ---
 
-### SHOT 5 — Partial observability reveal (0:34–0:48, 14s)
+### SHOT 6 — Partial observability reveal (0:52–1:06, 14s) · ACT 2: UNIQUENESS
 
 **Visual prompt:**
 
 > Cinematic close-up of a single calendar event tile labelled "VISA
 > REVIEW — DEADLINE ???", sealed behind a panel of frosted glass.
-> The frosted glass blocks all detail. A soft cyan circular pulse
-> emanates from outside the frame and strikes the glass. The frost
-> clears from center outward in a circular wipe. The tile now reads
-> "VISA REVIEW — DEADLINE 18:00" with the new text in green. Camera
-> holds still. Pure black background. Slow motion clear. Photo-real,
-> filmic grain.
+> The frosted glass blocks all detail. After ~3s, a soft cyan
+> circular pulse emanates from outside the frame and strikes the
+> glass. The frost clears from centre outward in a slow circular
+> wipe. The tile now reads "VISA REVIEW — DEADLINE 18:00" with the
+> new digits in glowing green. Camera holds still. Pure black
+> background. Photo-real, filmic grain. Subtle reverb whoosh on the
+> reveal.
 
-**VO (0:34–0:48):**
+**VO (0:52–1:06):**
 
-> Information is hidden until the agent asks. Ask, and the same
-> conflict comes back next step with the answer revealed.
+> Information is hidden until the agent asks.
+> Ask, and the same conflict comes back next step with the answer revealed.
+> Real two-step partial observability.
 
-**On-screen text (optional, top-right):**
+**On-screen text (top-right, monospace, 16pt, 50% opacity):**
 
 ```
 ask_clarification → reveal → re-present
 ```
 
-**Continuity:** held tile cross-fades to a wider view of the calendar in Shot 6.
+**Continuity:** revealed tile cross-fades to a wider view of the calendar in Shot 7.
 
 ---
 
-### SHOT 6 — Cascade domino (0:48–1:06, 18s)
+### SHOT 7 — Cascade domino (1:06–1:24, 18s) · ACT 2: UNIQUENESS · HERO SHOT
 
 **Visual prompt:**
 
-> Cinematic two-stage shot. First half (~9 seconds): a single calendar
-> tile labelled "CLIENT REVIEW → 19:00" is lifted by an invisible hand
-> and placed onto the calendar grid past the 18:00 line; the tile glows
-> red as it crosses the line. Second half (~9 seconds): the tile becomes
-> the first in a domino chain — a new red tile materialises labelled
-> "SCHOOL PICKUP CONFLICT" and is added to the cascade queue panel,
-> which had been empty. The cascade-queue counter ticks from 0 to 1.
-> Slow camera push-in across both halves. Pure black background, neon
-> accents, photo-real, no humans. Filmic, no UI chrome.
+> Cinematic two-stage shot. *First half* (~9 seconds): the camera
+> holds on the calendar grid from Shot 5. A single tile labelled
+> "CLIENT REVIEW" is lifted by an invisible force and placed past
+> the 18:00 horizontal line on the grid, settling at "19:00". As it
+> crosses the line, the tile glows red and a thin red boundary line
+> at 18:00 illuminates briefly. *Second half* (~9 seconds): the
+> "SCHOOL PICKUP 18:00" tile flashes amber, then a *new* red tile
+> materialises out of mid-air labelled "SCHOOL-PICKUP CASCADE" and
+> floats over to the previously-empty "CASCADE QUEUE" panel,
+> docking inside it. The cascade-queue counter ticks "0 → 1" with
+> a soft chime. Slow camera push-in across both halves. Pure black
+> background, neon accents, photo-real, no humans. Filmic, no UI
+> chrome.
 
-**VO (0:48–1:06):**
+**VO (1:06–1:24):**
 
-> The agent reschedules a work meeting past six p.m.
-> School pickup is at six.
-> A new conflict appears on the queue —
-> long-horizon, not classification.
+> Now watch. The agent moves a meeting past six.
+> The environment notices school pickup is at six.
+> A new conflict appears on the queue.
+> The agent's own decision created new work.
+> Long-horizon planning, not classification.
 
-**Continuity:** end with the cascade-queue panel showing "1" — set up for
-the trained-model section.
+**Continuity:** end with the cascade-queue panel showing "1" — sets up the rigour of Shots 8–9.
 
 ---
 
-### SHOT 7 — Regex barrier (1:06–1:18, 12s)
+### SHOT 8 — Regex barrier (1:24–1:32, 8s) · ACT 2: UNIQUENESS
 
 **Visual prompt:**
 
-> Cinematic slow-motion shot. Several text strings drift through space
-> from left to right: "after 8pm", "later today", "tomorrow morning",
-> "around dinner". A vertical wall of cyan code symbols labelled
-> "^[0-9]{2}:[0-9]{2}$" stands in their path; each natural-language
-> string hits the wall and bounces off, fragmenting into pixel dust.
-> Then a clean string "20:30" floats forward and passes cleanly through
-> the wall, glowing green on the other side. Pure black backdrop, neon
-> on the regex wall, photo-real, no people.
+> Cinematic slow-motion shot. Several text strings drift through
+> space from left to right: "after 8pm", "later today", "tomorrow
+> morning", "around dinner". A vertical wall of cyan code symbols
+> labelled "^[0-9]{2}:[0-9]{2}$" stands in their path; each natural-
+> language string hits the wall and bounces off, fragmenting into
+> pixel dust. Then a clean string "20:30" floats forward and passes
+> cleanly through the wall, glowing green on the other side. Pure
+> black backdrop, neon on the regex wall, photo-real, no people.
 
-**VO (1:06–1:18):**
+**VO (1:24–1:32):**
 
-> Slot grader is regex-strict. Twenty-four hour clock, or zero credit.
+> Slot grader is regex-strict. Twenty-four-hour clock or zero credit.
 
-**Continuity:** the green "20:30" carries momentum into Shot 8.
+**Continuity:** the green "20:30" carries momentum into Shot 9.
 
 ---
 
-### SHOT 8 — Message quality stamp (1:18–1:26, 8s)
+### SHOT 9 — Message quality stamp (1:32–1:38, 6s) · ACT 2: UNIQUENESS
 
 **Visual prompt:**
 
 > Cinematic top-down shot. Two paper-card messages float on a black
 > surface. The first reads "reschedule, work, urgent." in stark
 > typography; an amber "0.50" stamp slowly descends and brands it.
-> The second reads "Reschedule the incident review to 20:30 with owner
-> confirmation and a follow-up note." A green "1.00" stamp brands it.
-> Subtle paper texture, hard top light, no other elements. Slow drift.
-> Photo-real, monochrome with green and amber accents only.
+> The second reads "Reschedule the incident review to 20:30 with
+> owner confirmation and a follow-up note." A green "1.00" stamp
+> brands it. Subtle paper texture, hard top light. Photo-real,
+> monochrome with green and amber accents only.
 
-**VO (1:18–1:26):**
+**VO (1:32–1:38):**
 
 > Keyword stuffing scores half. Real sentences score full.
 
-**Continuity:** dissolve through black into Shot 9.
+**Continuity:** dissolve through black into Shot 10.
 
 ---
 
-### SHOT 9 — Reward climb (1:26–1:40, 14s)
+### SHOT 10 — Reward climb (1:38–1:50, 12s) · ACT 3: PROOF
 
 **Visual prompt:**
 
-> Cinematic data-viz shot. A single luminous curve drawn in cyan rises
-> from left to right across a deep black void. The curve starts low at
-> "0.5454" labelled "UNTRAINED" in monospace, climbs sharply to "0.9877"
-> labelled "+SFT", then a final tiny step to "0.9876" labelled "+GRPO".
-> Vertical gridlines fade in behind the curve. A small "n=40" tag floats
-> in the upper-right reading "HOLDOUT POOL · n=40 · seeds 9000–9099".
-> No people, no UI chrome. Camera slowly pushes in. Filmic vignette.
+> Cinematic data-viz shot. A single luminous curve drawn in cyan
+> rises from left to right across a deep black void. The curve
+> starts low at "0.5454" labelled "UNTRAINED" in monospace, climbs
+> sharply to "0.9877" labelled "+SFT", then a final tiny step to
+> "0.9876" labelled "+GRPO". Vertical gridlines fade in behind the
+> curve. A small "n=40" tag floats in the upper-right reading
+> "HOLDOUT POOL · n=40 · seeds 9000–9099". No people, no UI chrome.
+> Camera slowly pushes in. Filmic vignette.
 
-**VO (1:26–1:40):**
+**VO (1:38–1:50):**
 
 > Forty held-out episodes the model never saw.
 > Untrained: zero point five-four.
 > After SFT: zero point nine-eight.
 > Plus GRPO: zero point nine-eight.
 
-**Continuity:** curve persists; second curve fades in for Shot 10.
+**Continuity:** curve persists; second visual layer fades in for Shot 11.
 
 ---
 
-### SHOT 10 — Adversarial probe (1:40–1:48, 8s)
+### SHOT 11 — Adversarial probe (1:50–1:55, 5s) · ACT 3: PROOF
 
 **Visual prompt:**
 
-> Cinematic continuation of the previous data-viz scene. A row of ten
-> small red dots drifts in from the right, each labelled SEED 5000,
-> SEED 5001, ..., SEED 5009. They line up under a new bar that lights
-> up green at "0.9885" labelled "ADVERSARIAL · n=10". The bar pulses
-> once. Black background, neon accents only. Camera holds.
+> Cinematic continuation of the previous data-viz scene. A row of
+> ten small red dots drifts in from the right, each labelled SEED
+> 5000, 5001, ..., 5009. They line up under a new bar that lights
+> up green at "0.9885" labelled "ADVERSARIAL · n=10". The bar
+> pulses once. Black background, neon accents only. Camera holds.
 
-**VO (1:40–1:48):**
+**VO (1:50–1:55):**
 
 > Ten reserved adversarial seeds.
-> The trained model still scores zero point nine-eight.
+> Still zero point nine-eight.
 
 **Continuity:** all elements fade. Hard cut to black.
 
 ---
 
-### SHOT 11 — OpenEnv API pulse (1:48–1:54, 6s)
-
-**Visual prompt:**
-
-> Cinematic isometric shot. Three glowing nodes float in a triangular
-> arrangement against pure black. Each node is a small cube with a
-> luminous text label: "/reset" cyan, "/step" cyan, "/state" cyan.
-> Thin cyan lines pulse between them in sequence. Below the triangle,
-> small monospace text reads "OpenEnv · FastAPI · Procedural by seed".
-> Camera slow orbit 30 degrees. Photo-real, technical render aesthetic.
-
-**VO (1:48–1:54):**
-
-> OpenEnv-compatible. Reproducible on a free T4.
-
-**Continuity:** cubes fade out; isometric stack rises in Shot 12.
-
----
-
-### SHOT 12 — Closing logo + URLs (1:54–2:00, 6s)
+### SHOT 12 — Closing logo + URLs (1:55–2:00, 5s) · ACT 3: PROOF
 
 **Visual prompt:**
 
 > Cinematic isometric shot. Three semi-transparent dark rectangles
 > stacked at slight offsets, each rimmed with a thin white wireframe
 > outline, floating against pure black. The stack rotates slowly in
-> 3D. A subtle white particle drifts upward through the stack. Calm,
-> meditative. After 2 seconds, two clean monospace lines fade in below
-> the stack:
+> 3D. A subtle white particle drifts upward through the stack. After
+> ~1 second, three clean monospace lines fade in below the stack:
 >
+> openenv · /reset · /step · /state
 > github.com/srivtx/openenv-conflict-resolver-v2
 > huggingface.co/spaces/srivtx/openenv-conflict-resolver-v2
 >
-> Hold for the remaining 4 seconds. No logo text, no music sting.
+> Hold for the remaining time. No logo text, no music sting.
 
-**VO (1:54–2:00):**
+**VO (1:55–2:00):**
 
-> Code on GitHub. Live on Hugging Face Spaces.
+> OpenEnv-compatible. Code on GitHub. Live on Hugging Face.
 
 **Continuity:** hard fade to black at 2:00.
 
@@ -340,43 +379,71 @@ the trained-model section.
 
 ## 4. Voiceover script (clean, for TTS or actor)
 
-Trimmed to land in 2:00 hard cap. Word count: ~190. At 120 wpm this is
-~95 seconds of speech, leaving ~25 seconds of breathing/SFX room across
-the twelve cuts.
+Trimmed to land in 2:00 hard cap. Word count: ~195. At 120 wpm that's
+~98 seconds of actual speech, leaving ~22 seconds of breathing and SFX
+room distributed across the twelve cuts. The script is structured as
+**Problem → Uniqueness → Proof** so a judge feels the stakes before any
+technical claim lands.
 
-> Most RL environments for language agents are static answer keys.
->
-> We built one with state.
->
-> Every episode is generated from a seed.
-> Disjoint pools — train, holdout, adversarial.
->
-> A mutable calendar, pending clarifications, a cascade queue —
-> all carrying across steps.
->
-> Information is hidden until the agent asks. Ask, and the same
-> conflict comes back next step with the answer revealed.
->
-> The agent reschedules a work meeting past six p.m.
-> School pickup is at six.
-> A new conflict appears on the queue —
-> long-horizon, not classification.
->
-> Slot grader is regex-strict. Twenty-four hour clock, or zero credit.
->
-> Keyword stuffing scores half. Real sentences score full.
->
-> Forty held-out episodes the model never saw.
-> Untrained: zero point five-four.
-> After SFT: zero point nine-eight.
-> Plus GRPO: zero point nine-eight.
->
-> Ten reserved adversarial seeds.
-> The trained model still scores zero point nine-eight.
->
-> OpenEnv-compatible. Reproducible on a free T4.
->
-> Code on GitHub. Live on Hugging Face Spaces.
+```
+[ACT 1 — PROBLEM]
+
+[Shot 1 · 0:00–0:10]
+Board review at four-fifteen. School pickup at six.
+A request lands that breaks both.
+
+[Shot 2 · 0:10–0:20]
+The assistant gives you a confident answer.
+It silently breaks two other commitments.
+
+[Shot 3 · 0:20–0:30]
+Why? The environments we train them in are static answer keys.
+No state. No consequences.
+
+[ACT 2 — UNIQUENESS]
+
+[Shot 4 · 0:30–0:40]
+So we built one with state.
+Every episode generated from a seed.
+Train, holdout, adversarial — disjoint.
+
+[Shot 5 · 0:40–0:52]
+A mutable calendar. Pending clarifications. A cascade queue.
+All of it carries across steps.
+
+[Shot 6 · 0:52–1:06]
+Information is hidden until the agent asks.
+Ask, and the same conflict comes back next step with the answer revealed.
+Real two-step partial observability.
+
+[Shot 7 · 1:06–1:24]   ← HERO BEAT
+Now watch. The agent moves a meeting past six.
+The environment notices school pickup is at six.
+A new conflict appears on the queue.
+The agent's own decision created new work.
+Long-horizon planning, not classification.
+
+[Shot 8 · 1:24–1:32]
+Slot grader is regex-strict. Twenty-four-hour clock or zero credit.
+
+[Shot 9 · 1:32–1:38]
+Keyword stuffing scores half. Real sentences score full.
+
+[ACT 3 — PROOF]
+
+[Shot 10 · 1:38–1:50]
+Forty held-out episodes the model never saw.
+Untrained: zero point five-four.
+After SFT: zero point nine-eight.
+Plus GRPO: zero point nine-eight.
+
+[Shot 11 · 1:50–1:55]
+Ten reserved adversarial seeds.
+Still zero point nine-eight.
+
+[Shot 12 · 1:55–2:00]
+OpenEnv-compatible. Code on GitHub. Live on Hugging Face.
+```
 
 **Pacing tip:** record VO at a flat 120 wpm, then in DaVinci Resolve nudge
 silences between shots to align breaths with the visual cuts. Don't speed-
@@ -387,17 +454,20 @@ ramp the VO itself — TTS at 1.1× sounds robotic on the long shots.
 ## 5. Generation tooling — pick your stack
 
 Sora 2 and Veo 3 are the most reliable in 2026 for ~10–15s photo-real
-shots. Runway Gen-4 is good for the data-viz shots (9, 10). Pika 2.2 is
-acceptable for transitions (Shots 2, 8).
+shots. Runway Gen-4 is good for the data-viz shots (10, 11). Pika 2.2
+is acceptable for paper-card transitions (Shot 9).
 
-| Shot | Recommended tool | Why |
-| --- | --- | --- |
-| 1, 4, 5, 6, 12 | Sora 2 or Veo 3 | photo-real macro / 3D / orbital |
-| 2, 8 | Pika 2.2 or Runway | particle / paper transitions |
-| 3 | Veo 3 | reliable for time-lapse particles |
-| 7 | Runway Gen-4 | best with overlaid typography |
-| 9, 10 | Runway Gen-4 + manual After Effects | data-viz needs precise text |
-| 11 | Sora 2 | clean isometric render |
+| Shot | Act | Recommended tool | Why |
+| --- | --- | --- | --- |
+| 1 | Problem | Sora 2 or Veo 3 | photo-real overhead macro on paper |
+| 2 | Problem | Runway Gen-4 or Veo 3 | clean typography in chat bubble |
+| 3 | Problem | Sora 2 or Veo 3 | photo-real glass + dust |
+| 4 | Unique | Veo 3 | reliable for time-lapse particle assembly |
+| 5, 6, 7 | Unique | Sora 2 or Veo 3 | 3D orbital / reveal / domino |
+| 8 | Unique | Runway Gen-4 | best with overlaid regex typography |
+| 9 | Unique | Pika 2.2 or Runway | paper-card stamps |
+| 10, 11 | Proof | Runway Gen-4 + manual After Effects | data-viz needs precise text |
+| 12 | Proof | Sora 2 | clean isometric render |
 
 If your generator can't render the in-shot monospace text reliably,
 **generate the shot without text** and overlay the typography in DaVinci
@@ -416,11 +486,13 @@ visuals should breathe.
 
 - [ ] Generate all 12 shots at 1080p+, 24fps.
 - [ ] Drop in DaVinci Resolve / Premiere / CapCut on a single video track.
-- [ ] Add 12-frame cross-dissolves between shots 3↔4, 4↔5, 9↔10. Hard cuts
-      everywhere else.
-- [ ] Add Shot 3's seed-pool text overlay in monospace `JetBrains Mono`,
+- [ ] Add 12-frame cross-dissolves between shots 3↔4 (the shatter), 5↔6
+      (orbit into reveal), and 10↔11 (data-viz continuation). Hard cuts
+      everywhere else, especially 6↔7 (the cascade beat must hit).
+- [ ] Add Shot 4's seed-pool text overlay in monospace `JetBrains Mono`,
       18pt, 60% opacity, lower third.
-- [ ] Same monospace for Shot 9, 10, 12 overlays.
+- [ ] Same monospace for Shot 6's `ask_clarification → reveal → re-present`
+      hint (top-right, 16pt, 50% opacity) and Shot 10/11/12 overlays.
 - [ ] Voiceover on a separate track, ducked under any sound effects.
 - [ ] Color grade the whole timeline with a Kodak 2383 LUT at 30%
       strength to unify the AI-generated palette.
@@ -453,29 +525,37 @@ visuals should breathe.
 
 A normal screen recording of our website shows clicks. A judge sees the
 clicks and has to *trust* that the underlying environment is doing what we
-say. The cinematic version is doing something different: each shot
-**externalises** an internal mechanism so the judge can *see* the claim,
-then the VO ties the visual to the technical detail.
+say. The cinematic version is doing something different: it **opens with
+the problem the audience already feels**, then each shot **externalises**
+an internal mechanism so the judge can *see* the claim, then the VO ties
+the visual to the technical detail.
 
+- **The problem** isn't told as a paragraph — it's shown as a paper
+  calendar drowning in sticky notes and an orange "URGENT" note landing
+  on top of school pickup (Shot 1), then an AI chat bubble sounding
+  confident while two adjacent commitments crack and dim (Shot 2), then
+  every training environment frozen behind glass (Shot 3).
 - **Procedural generation** isn't shown as JSON output — it's shown as
-  particles re-forming into different calendars (Shot 3).
+  particles re-forming into different calendars per seed (Shot 4).
 - **Mutable WorldState** isn't shown as an API field — it's shown as
-  glowing tiles and floating panels carrying through the camera orbit
-  (Shot 4).
+  glowing calendar tiles and floating panels carrying through the
+  camera orbit (Shot 5).
 - **Partial observability** isn't shown as the agent typing
   `ask_clarification` — it's shown as frosted glass clearing on a sealed
-  event (Shot 5).
+  event (Shot 6).
 - **Cascading conflicts** aren't shown as an int counter — they're shown
-  as a domino chain that produces a new red tile in the queue (Shot 6).
+  as a calendar tile crossing the 18:00 line and *causing* a new red
+  tile to materialise in the cascade queue (Shot 7, the hero beat).
 - **The grader** isn't shown as Python — it's shown as a regex wall that
-  rejects natural-language strings (Shot 7) and a stamp that brands a
-  stuffed message (Shot 8).
+  rejects natural-language strings (Shot 8) and a stamp that brands a
+  stuffed message (Shot 9).
 - **The training result** isn't a table — it's a curve climbing from
-  0.55 to 0.99 with a held-out tag (Shot 9), then ten red probe seeds
-  lighting up the adversarial bar at 0.99 (Shot 10).
+  0.5454 to 0.9876 with a held-out tag (Shot 10), then ten red probe
+  seeds lighting up the adversarial bar at 0.9885 (Shot 11).
 
 That's the difference between a demo and a film. Both can be honest.
-Only the film makes the abstract mechanics visible without code.
+Only the film makes the *problem* and the *mechanics* visible without
+code, in 120 seconds.
 
 ---
 
