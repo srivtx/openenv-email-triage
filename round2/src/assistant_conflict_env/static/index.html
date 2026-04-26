@@ -578,6 +578,184 @@
       color: var(--green) !important;
     }
 
+    /* Pool / seed badge in header */
+    .pool-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 4px 10px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      margin-left: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .pool-badge.adversarial {
+      border-color: rgba(248, 113, 113, 0.5);
+      color: var(--red);
+    }
+
+    .pool-badge.holdout {
+      border-color: rgba(250, 204, 21, 0.5);
+      color: var(--yellow);
+    }
+
+    .pool-badge.train {
+      border-color: rgba(74, 222, 128, 0.5);
+      color: var(--green);
+    }
+
+    /* Banners on conflict cards */
+    .banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .banner svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      margin-top: 2px;
+    }
+
+    .banner-cascade {
+      background-color: rgba(248, 113, 113, 0.08);
+      border-color: rgba(248, 113, 113, 0.4);
+      color: #fca5a5;
+    }
+
+    .banner-reveal {
+      background-color: rgba(74, 222, 128, 0.08);
+      border-color: rgba(74, 222, 128, 0.4);
+      color: #86efac;
+    }
+
+    .banner-clarification {
+      background-color: rgba(250, 204, 21, 0.08);
+      border-color: rgba(250, 204, 21, 0.4);
+      color: #fde68a;
+    }
+
+    /* World-state strip */
+    .state-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .state-card {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+
+    .state-card-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .state-card-value {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .state-card-value.zero {
+      color: var(--text-muted);
+    }
+
+    .state-card-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .state-list {
+      max-height: 180px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .state-list-item {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .state-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .state-list-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 6px 0;
+    }
+
+    /* Component / penalty chips */
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--text-secondary);
+      background-color: var(--bg);
+    }
+
+    .chip.good {
+      border-color: rgba(74, 222, 128, 0.4);
+      color: #86efac;
+    }
+
+    .chip.bad {
+      border-color: rgba(248, 113, 113, 0.4);
+      color: #fca5a5;
+    }
+
+    .chip.warn {
+      border-color: rgba(250, 204, 21, 0.4);
+      color: #fde68a;
+    }
+
+    .chip.penalty {
+      border-color: rgba(248, 113, 113, 0.5);
+      color: var(--red);
+      background-color: rgba(248, 113, 113, 0.08);
+    }
+
     /* Log Console */
     .console {
       background-color: var(--bg);
@@ -690,6 +868,14 @@
       <div style="flex:1"></div>
       <div class="nav-menu">
         <a class="nav-item"
+          onclick="window.open('https://github.com/srivtx/openenv-conflict-resolver-v2','_blank')">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+          </svg>
+          GitHub
+        </a>
+        <a class="nav-item"
           onclick="window.open('https://huggingface.co/spaces/srivtx/openenv-conflict-resolver-v2','_blank')">
           <svg viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" />
@@ -702,10 +888,13 @@
 
     <div class="main-content">
       <div class="header">
-        <div class="header-title">Conflict Analytics</div>
+        <div class="header-title">
+          <span id="header-title-text">Conflict Analytics</span>
+          <span id="header-pool-badge" class="pool-badge hidden"></span>
+        </div>
         <div class="system-status">
           <div class="status-dot active"></div>
-          System Ready
+          <span id="system-status-text">System Ready</span>
         </div>
       </div>
 
@@ -859,8 +1048,75 @@
                   style="color:var(--text-secondary);font-weight:400;margin-left:8px;"></span></span>
               <span id="episode-status" style="font-size:12px;color:var(--text-muted)"></span>
             </div>
+
+            <div id="banner-cascade" class="banner banner-cascade hidden">
+              <svg viewBox="0 0 24 24">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <div><strong>Cascade-triggered.</strong> This conflict was spawned by your earlier decision &mdash;
+                long-horizon state carrying forward.</div>
+            </div>
+
+            <div id="banner-reveal" class="banner banner-reveal hidden">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="9 12 12 15 17 10" />
+              </svg>
+              <div><strong>Info revealed:</strong> <span id="banner-reveal-text"></span></div>
+            </div>
+
+            <div id="banner-clarification" class="banner banner-clarification hidden">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <div><strong>Clarification asked.</strong> The same conflict will re-appear next step with revealed
+                info &mdash; two-step partial observability.</div>
+            </div>
+
             <div style="font-size: 15px; line-height: 1.6; margin-bottom: 16px;" id="conflict-desc"></div>
             <div class="tags" id="conflict-tags"></div>
+          </div>
+
+          <div class="panel" id="world-state-panel" style="display: none;">
+            <div class="panel-title">
+              <span>World State</span>
+              <span style="font-size:11px;color:var(--text-muted)">persists across steps</span>
+            </div>
+            <div class="state-strip">
+              <div class="state-card">
+                <div class="state-card-label">Queue remaining</div>
+                <div class="state-card-value" id="ws-queue">0</div>
+                <div class="state-card-sub">conflicts left to resolve</div>
+              </div>
+              <div class="state-card">
+                <div class="state-card-label">Cascades spawned</div>
+                <div class="state-card-value" id="ws-cascade">0</div>
+                <div class="state-card-sub">follow-on conflicts your decisions added</div>
+              </div>
+              <div class="state-card">
+                <div class="state-card-label">Pending clarifications</div>
+                <div class="state-card-value" id="ws-pending">0</div>
+                <div class="state-card-sub">awaiting reveal next step</div>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div>
+                <div class="state-card-label" style="margin-bottom: 8px;">Calendar (mutable)</div>
+                <div class="state-list" id="ws-calendar">
+                  <div class="state-list-empty">no events</div>
+                </div>
+              </div>
+              <div>
+                <div class="state-card-label" style="margin-bottom: 8px;">Pending clarification queue</div>
+                <div class="state-list" id="ws-pending-list">
+                  <div class="state-list-empty">none</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="panel" id="action-panel" style="display: none;">
@@ -869,9 +1125,9 @@
               <div class="form-group">
                 <label class="form-label">Intent</label>
                 <select class="form-control" id="f-intent">
-                  <option value="route_message">route_message</option>
+                  <option value="route_message" selected>route_message</option>
                   <option value="propose_plan">propose_plan</option>
-                  <option value="reschedule_event" selected>reschedule_event</option>
+                  <option value="reschedule_event">reschedule_event</option>
                   <option value="delegate_task">delegate_task</option>
                   <option value="ask_clarification">ask_clarification</option>
                   <option value="finalize_itinerary">finalize_itinerary</option>
@@ -880,8 +1136,8 @@
               <div class="form-group">
                 <label class="form-label">Owner</label>
                 <select class="form-control" id="f-owner">
-                  <option value="self">self</option>
-                  <option value="work" selected>work</option>
+                  <option value="self" selected>self</option>
+                  <option value="work">work</option>
                   <option value="family">family</option>
                   <option value="travel">travel</option>
                   <option value="finance">finance</option>
@@ -892,8 +1148,8 @@
                 <label class="form-label">Priority</label>
                 <select class="form-control" id="f-priority">
                   <option value="low">low</option>
-                  <option value="normal">normal</option>
-                  <option value="high" selected>high</option>
+                  <option value="normal" selected>normal</option>
+                  <option value="high">high</option>
                   <option value="urgent">urgent</option>
                 </select>
               </div>
@@ -911,12 +1167,23 @@
               <div class="form-group" style="grid-column: 1 / -1;">
                 <label class="form-label">Message</label>
                 <input type="text" class="form-control" id="f-msg" placeholder="Action message..."
-                  value="Resolving conflict with appropriate action.">
+                  value="">
               </div>
             </div>
-            <div style="display:flex; gap:12px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <div style="display:flex; gap:12px; border-top: 1px solid var(--border); padding-top: 20px; align-items: center;">
               <button class="btn btn-primary" onclick="submitAction()">Execute Action</button>
-              <button class="btn btn-secondary" onclick="autoResolve()">Auto-Resolve Pipeline</button>
+              <button class="btn btn-secondary" onclick="autoResolve()" title="Keyword-matching baseline, no LLM">
+                Auto-Resolve (heuristic baseline)
+              </button>
+              <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">
+                heuristic ≈ 0.72 &middot; trained 3B ≈ 0.99
+              </span>
+            </div>
+            <div id="last-step-breakdown" class="hidden" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                Last step breakdown
+              </div>
+              <div class="chip-row" id="last-step-chips"></div>
             </div>
           </div>
 
@@ -1086,6 +1353,37 @@
 
     const API = window.location.origin;
     let currentConflict = null, stepCount = 0, totalReward = 0, rewards = [];
+    let currentTaskId = null;
+
+    // Pool classification from procedural seed ranges (mirrors round2/eval_set.py).
+    function poolForTask(taskId) {
+      const m = /^proc_(easy|medium|hard)_(\d+)$/.exec(taskId || '');
+      if (!m) return { pool: 'static', cls: '', label: 'Static demo' };
+      const seed = parseInt(m[2], 10);
+      if (seed >= 1000 && seed < 2000) return { pool: 'train', cls: 'train', label: 'Train pool' };
+      if (seed >= 9000 && seed < 9100) return { pool: 'holdout', cls: 'holdout', label: 'Holdout pool' };
+      if (seed >= 5000 && seed < 5010) return { pool: 'adversarial', cls: 'adversarial', label: 'Adversarial pool' };
+      return { pool: 'unseen', cls: '', label: 'Unseen seed' };
+    }
+
+    function updateHeader(taskId, observation) {
+      const titleEl = document.getElementById('header-title-text');
+      const badgeEl = document.getElementById('header-pool-badge');
+      if (!taskId) {
+        titleEl.innerText = 'Conflict Analytics';
+        badgeEl.classList.add('hidden');
+        return;
+      }
+      const m = /^proc_(easy|medium|hard)_(\d+)$/.exec(taskId);
+      const diff = observation?.task_difficulty || (m ? m[1] : '');
+      titleEl.innerText = diff ? (diff[0].toUpperCase() + diff.slice(1) + ' episode') : 'Conflict episode';
+      const info = poolForTask(taskId);
+      badgeEl.className = 'pool-badge ' + info.cls;
+      badgeEl.innerText = info.pool === 'static'
+        ? `static · ${taskId}`
+        : `${info.label} · seed ${m[2]}`;
+      badgeEl.classList.remove('hidden');
+    }
 
     function showPage(id, element) {
       document.querySelectorAll('[id^=page-]').forEach(p => p.classList.add('hidden'));
@@ -1125,13 +1423,16 @@
           body: JSON.stringify({ task_name: taskId })
         });
         const data = await res.json();
-        currentConflict = data; stepCount = 0; totalReward = 0; rewards = [];
+        currentConflict = data; currentTaskId = taskId;
+        stepCount = 0; totalReward = 0; rewards = [];
 
         document.getElementById('step-log').innerHTML = '<div class="log-line">Task loaded: <span class="log-val">' + taskId + '</span></div>';
+        document.getElementById('last-step-breakdown').classList.add('hidden');
+        document.getElementById('banner-clarification').classList.add('hidden');
 
+        updateHeader(taskId, data.observation);
         updatePipeline('resolve');
         showPage('playground');
-        // Set active nav manually since event target is a button
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.querySelectorAll('.nav-item')[1].classList.add('active');
 
@@ -1139,17 +1440,87 @@
       } catch (e) { alert('Error: ' + e.message); }
     }
 
-    function updatePlayground(data) {
+    function renderWorldState(observation) {
+      if (!observation) return;
+      const queue = observation.remaining_count ?? 0;
+      const cascade = observation.cascade_count ?? 0;
+      const pending = (observation.pending_clarifications || []).length;
+
+      const setMetric = (id, val) => {
+        const el = document.getElementById(id);
+        el.innerText = val;
+        el.classList.toggle('zero', val === 0 || val === '0');
+      };
+      setMetric('ws-queue', queue);
+      setMetric('ws-cascade', cascade);
+      setMetric('ws-pending', pending);
+
+      const cal = document.getElementById('ws-calendar');
+      const events = observation.available_calendar || [];
+      cal.innerHTML = events.length
+        ? events.map(e => `<div class="state-list-item"><span>${e.title || '(untitled)'}</span><span style="color:var(--text-muted)">${e.start || ''}${e.end ? '&ndash;' + e.end : ''}</span></div>`).join('')
+        : '<div class="state-list-empty">no events</div>';
+
+      const pendList = document.getElementById('ws-pending-list');
+      const pendItems = observation.pending_clarifications || [];
+      pendList.innerHTML = pendItems.length
+        ? pendItems.map(p => `<div class="state-list-item"><span>${p.conflict_id || p.id || 'pending'}</span><span style="color:var(--text-muted)">${(p.question || p.kind || 'awaiting reveal')}</span></div>`).join('')
+        : '<div class="state-list-empty">none</div>';
+    }
+
+    function renderBanners(conflict) {
+      const cascadeEl = document.getElementById('banner-cascade');
+      const revealEl = document.getElementById('banner-reveal');
+      if (!conflict) {
+        cascadeEl.classList.add('hidden');
+        revealEl.classList.add('hidden');
+        return;
+      }
+      cascadeEl.classList.toggle('hidden', !conflict.is_cascade);
+      const revealed = conflict.revealed_info || '';
+      if (revealed && revealed.trim()) {
+        revealEl.classList.remove('hidden');
+        document.getElementById('banner-reveal-text').innerText = revealed;
+      } else {
+        revealEl.classList.add('hidden');
+      }
+    }
+
+    function renderChips(info) {
+      const wrap = document.getElementById('last-step-breakdown');
+      const row = document.getElementById('last-step-chips');
+      if (!info) { wrap.classList.add('hidden'); return; }
+      const components = info.reward_components || {};
+      const penalties = info.penalties || {};
+      const chips = [];
+      Object.entries(components).forEach(([k, v]) => {
+        const score = Number(v);
+        const cls = score >= 0.99 ? 'good' : score >= 0.5 ? 'warn' : 'bad';
+        chips.push(`<span class="chip ${cls}">${k}: ${score.toFixed(2)}</span>`);
+      });
+      Object.entries(penalties).forEach(([k, v]) => {
+        if (Number(v) > 0) chips.push(`<span class="chip penalty">&minus;${k} (${Number(v).toFixed(2)})</span>`);
+      });
+      if (chips.length === 0) { wrap.classList.add('hidden'); return; }
+      row.innerHTML = chips.join('');
+      wrap.classList.remove('hidden');
+    }
+
+    function updatePlayground(data, lastInfo) {
       const c = data.observation?.current_conflict;
       document.getElementById('conflict-panel').style.display = 'block';
       document.getElementById('action-panel').style.display = 'block';
+      document.getElementById('world-state-panel').style.display = 'block';
       document.getElementById('log-panel').style.display = 'block';
       document.getElementById('done-panel').classList.add('hidden');
+
+      renderWorldState(data.observation);
 
       if (data.done) {
         updatePipeline('score');
         document.getElementById('conflict-panel').style.display = 'none';
         document.getElementById('action-panel').style.display = 'none';
+        document.getElementById('world-state-panel').style.display = 'none';
         document.getElementById('done-panel').classList.remove('hidden');
         const avg = (totalReward / Math.max(rewards.length, 1)).toFixed(4);
         document.getElementById('final-score').innerText = avg;
@@ -1159,10 +1530,23 @@
       }
 
       if (c) {
-        document.getElementById('conflict-counter').innerText = `(${(data.observation?.step_index || 0) + 1} of ${data.observation?.max_steps || '?'})`;
+        const stepIdx = data.observation?.step_index || 0;
+        const remaining = data.observation?.remaining_count ?? 0;
+        document.getElementById('conflict-counter').innerText = `· step ${stepIdx + 1} · ${remaining} left in queue`;
         document.getElementById('conflict-desc').innerText = c.summary || '';
         document.getElementById('conflict-tags').innerHTML = (c.constraints || []).map(x => `<span class="tag">${x}</span>`).join('');
+        renderBanners(c);
       }
+
+      // Show clarification banner if last step kept conflict at front for reveal
+      const clarifEl = document.getElementById('banner-clarification');
+      if (lastInfo && lastInfo.kept_for_clarification) {
+        clarifEl.classList.remove('hidden');
+      } else {
+        clarifEl.classList.add('hidden');
+      }
+
+      renderChips(lastInfo);
     }
 
     async function submitAction() {
@@ -1187,11 +1571,13 @@
 
         const log = document.getElementById('step-log');
         const color = rw > 0.7 ? 'var(--green)' : rw > 0.4 ? 'var(--yellow)' : 'var(--red)';
-        log.innerHTML += `<div class="log-line">>&nbsp;[Step ${stepCount}] Action: <span class="log-val">${action.intent}</span> | Reward: <span style="color:${color}">${rw.toFixed(4)}</span></div>`;
+        const cascadeFlag = data.info?.cascade_added ? ' <span style="color:var(--red)">[cascade!]</span>' : '';
+        const clarFlag = data.info?.kept_for_clarification ? ' <span style="color:var(--yellow)">[clarification]</span>' : '';
+        log.innerHTML += `<div class="log-line">&gt;&nbsp;[Step ${stepCount}] Action: <span class="log-val">${action.intent}</span> | Reward: <span style="color:${color}">${rw.toFixed(4)}</span>${cascadeFlag}${clarFlag}</div>`;
         log.scrollTop = log.scrollHeight;
 
         currentConflict = data;
-        updatePlayground(data);
+        updatePlayground(data, data.info);
       } catch (e) { alert('Error: ' + e.message); }
     }
 
@@ -1227,8 +1613,3 @@
 </body>
 
 </html>
-}
-</script>
-</body>
-
-</html><!-- Trigger HF Push -->
